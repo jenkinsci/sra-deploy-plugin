@@ -60,6 +60,12 @@
         </dependency>
     </dependencies>
 
+    <scm>
+    	<connection>scm:git:ssh://github.com/jenkinsci/sra-deploy-plugin.git</connection>
+    	<developerConnection>scm:git:ssh://git@github.com/jenkinsci/sra-deploy-plugin.git</developerConnection>
+    	<url>https://github.com/jenkinsci/sra-deploy-plugin/</url>
+    </scm>
+
     <build>
         <finalName>${project.artifactId}</finalName>
         <defaultGoal>package</defaultGoal>
