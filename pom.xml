@@ -13,7 +13,7 @@
   <packaging>hpi</packaging>
   <name>Serena SRA Deploy</name>
   <description>Serena SRA Deploy for Jenkins</description>
-  <url>http://wiki.jenkins-ci.org/display/JENKINS/SerenaDeploy+Plugin</url>
+  <url>http://wiki.jenkins-ci.org/display/JENKINS/Serena+Deploy+Plugin</url>
 
     <developers>
         <developer>
