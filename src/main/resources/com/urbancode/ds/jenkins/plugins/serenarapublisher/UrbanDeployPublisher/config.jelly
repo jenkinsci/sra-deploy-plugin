@@ -1,49 +1,58 @@
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
 
-  <j:set var="helpURL" value="/plugin/serenarapublisher"/>
+  <j:set var="helpURL" value="/plugin/sra-deploy"/>
 
   <f:entry>
     <table width="100%">
-      <f:entry title="SerenaRA Server" help="${helpURL}/help-site.html">
+      <f:entry title="Serena RA Server" help="${helpURL}/help-site.html">
         <select class="setting-input" name="siteName">
           <j:forEach var="s" items="${descriptor.sites}">
             <f:option selected="${s.displayName==instance.siteName}">${s.displayName}</f:option>
           </j:forEach>
         </select>
       </f:entry>
-      <f:entry title="Component" field="component" help="${helpURL}/help-component.html">
-        <f:textbox/>
+      
+      <f:entry title="Component" help="${helpURL}/help-component.html">
+        <f:textbox name="urbandeploypublisher.component" value="${instance.component}" />
       </f:entry>
-      <f:entry title="Base Artifact Directory" field="baseDir" help="${helpURL}/help-basedir.html">
-        <f:textbox default="${WORKSPACE}"/>
+
+      <f:entry title="Base Artifact Directory" help="${helpURL}/help-basedir.html">
+        <f:textbox name="urbandeploypublisher.baseDir" value="${instance.baseDir}" default="${WORKSPACE}"/>
       </f:entry>
-      <f:entry title="Directory Offset" field="directoryOffset" help="${helpURL}/help-diroffset.html">
-        <f:textbox/>
+      
+      <f:entry title="Directory Offset" help="${helpURL}/help-diroffset.html">
+        <f:textbox name="urbandeploypublisher.directoryOffset" value="${instance.directoryOffset}" />
       </f:entry>
-      <f:entry title="Version" field="versionName" help="${helpURL}/help-versionname.html">
-        <f:textbox default="${BUILD_NUMBER}"/>
+      
+      <f:entry title="Version" help="${helpURL}/help-versionname.html">
+        <f:textbox name="urbandeploypublisher.versionName" value="${instance.versionName}" default="${BUILD_NUMBER}"/>
       </f:entry>
-      <f:entry title="Include" field="fileIncludePatterns" help="${helpURL}/help-fileincludes.html">
-        <f:textarea default="**/*"/>
+      
+      <f:entry title="Include" help="${helpURL}/help-fileincludes.html">
+        <f:textarea name="urbandeploypublisher.fileIncludePatterns" value="${instance.fileIncludePatterns}" default="**/*"/>
       </f:entry>
-      <f:entry title="Exclude" field="fileExcludePatterns" help="${helpURL}/help-fileexcludes.html">
-        <f:textarea/>
+      
+      <f:entry title="Exclude" help="${helpURL}/help-fileexcludes.html">
+        <f:textarea name="urbandeploypublisher.fileExcludePatterns" value="${instance.fileExcludePatterns}" />
       </f:entry>
-      <f:entry title="Skip publishing (e.g. temporarily)" field="skip">
-        <f:checkbox/>
+      
+      <f:entry title="Skip publishing (e.g. temporarily)">
+        <f:checkbox name="urbandeploypublisher.skip" value="${instance.skip}" />
       </f:entry>
-      <f:entry title="Deploy" field="deploy" help="${helpURL}/help-deploy.html">
-        <f:checkbox/>
-      </f:entry>
-      <f:entry title="Deploy Application" field="deployApp" help="${helpURL}/help-deployapp.html">
-        <f:textbox/>
-      </f:entry>
-      <f:entry title="Deploy Environment" field="deployEnv" help="${helpURL}/help-deployenv.html">
-        <f:textbox/>
-      </f:entry>
-      <f:entry title="Deploy Process" field="deployProc" help="${helpURL}/help-deployproc.html">
-        <f:textbox/>
-      </f:entry>
+      
+      <f:optionalBlock name="urbandeploypublisher.deploy" title="Deploy"
+            checked="${instance.deploy}" help="${helpURL}/help-deploy.html">
+         <f:entry title="Deploy Application" help="${helpURL}/help-deployapp.html">
+            <f:textbox name="urbandeploypublisher.deployApp" value="${instance.deployApp}" />
+         </f:entry>
+         <f:entry title="Deploy Environment" help="${helpURL}/help-deployenv.html">
+            <f:textbox name="urbandeploypublisher.deployEnv" value="${instance.deployEnv}" />
+         </f:entry>
+         <f:entry title="Deploy Process" help="${helpURL}/help-deployproc.html">
+            <f:textbox name="urbandeploypublisher.deployProc" value="${instance.deployProc}"/>
+         </f:entry>
+      </f:optionalBlock>
+      
     </table>
   </f:entry>
 

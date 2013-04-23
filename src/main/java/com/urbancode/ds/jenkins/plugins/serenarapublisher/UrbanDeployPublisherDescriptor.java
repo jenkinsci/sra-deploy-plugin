@@ -87,8 +87,13 @@ package com.urbancode.ds.jenkins.plugins.serenarapublisher;
 import hudson.model.AbstractProject;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Publisher;
+import hudson.tasks.Notifier;
 import hudson.util.CopyOnWriteList;
 import hudson.util.FormFieldValidator;
+import hudson.util.FormValidation;
+import hudson.Util;
+
+
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -121,7 +126,7 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
      */
     @Override
     public String getDisplayName() {
-        return "Publish artifacts to SerenaRA";
+        return "Publish artifacts to Serena RA";
     }
 
     /**
@@ -170,6 +175,87 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
         sites.replaceBy(req.bindParametersToList(UrbanDeploySite.class, "ud."));
         save();
         return true;
+    }
+
+    @Override
+    public Notifier newInstance(StaplerRequest req, JSONObject formData)
+            throws FormException {
+ 
+        Boolean skip = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("urbandeploypublisher.skip")));
+        Boolean deploy = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("urbandeploypublisher.deploy")));
+                
+        String siteName = req.getParameter("urbandeploypublisher.siteName");
+        
+        if (siteName != null) {
+            siteName = Util.fixNull(req.getParameter("urbandeploypublisher.siteName").trim());
+        }
+  
+        String component = req.getParameter("urbandeploypublisher.component");
+        
+        if (component != null) {
+            component = Util.fixNull(req.getParameter("urbandeploypublisher.component").trim());
+        }
+
+        String versionName = req.getParameter("urbandeploypublisher.versionName");
+        
+        if (versionName != null) {
+            versionName = Util.fixNull(req.getParameter("urbandeploypublisher.versionName").trim());
+        }
+
+        
+        String directoryOffset = req.getParameter("urbandeploypublisher.directoryOffset");
+        
+        if (directoryOffset != null) {
+            directoryOffset = Util.fixNull(req.getParameter("urbandeploypublisher.directoryOffset").trim());
+        }
+
+        String baseDir = req.getParameter("urbandeploypublisher.baseDir");
+        
+        if (baseDir != null) {
+            baseDir = Util.fixNull(req.getParameter("urbandeploypublisher.baseDir").trim());
+        }
+
+        String fileIncludePatterns = req.getParameter("urbandeploypublisher.fileIncludePatterns");
+        
+        if (fileIncludePatterns != null) {
+            fileIncludePatterns = Util.fixNull(req.getParameter("urbandeploypublisher.fileIncludePatterns").trim());
+        }
+
+        String fileExcludePatterns = req.getParameter("urbandeploypublisher.fileExcludePatterns");
+        
+        if (fileExcludePatterns != null) {
+            fileExcludePatterns = Util.fixNull(req.getParameter("urbandeploypublisher.fileExcludePatterns").trim());
+        }
+
+        String deployApp = req.getParameter("urbandeploypublisher.deployApp");
+        
+        if (deployApp != null) {
+            deployApp = Util.fixNull(req.getParameter("urbandeploypublisher.deployApp").trim());
+        }
+                
+        String deployEnv = req.getParameter("urbandeploypublisher.deployEnv");
+        
+        if (deployEnv != null) {
+            deployEnv = Util.fixNull(req.getParameter("urbandeploypublisher.deployEnv").trim());
+        }
+
+        String deployProc = req.getParameter("urbandeploypublisher.deployProc");
+        
+        if (deployProc != null) {
+            deployProc = Util.fixNull(req.getParameter("urbandeploypublisher.deployProc").trim());
+        }
+
+        UrbanDeployPublisher notif = new UrbanDeployPublisher(siteName, component,
+                                                              versionName, directoryOffset,
+                                                              baseDir,
+                                                              fileIncludePatterns,
+                                                              fileExcludePatterns,
+                                                              skip, deploy,
+                                                              deployApp,
+                                                              deployEnv,
+                                                              deployProc);
+        
+        return notif;
     }
 
     public void doTestConnection(StaplerRequest req, StaplerResponse rsp, @QueryParameter("ud.url") final String url,

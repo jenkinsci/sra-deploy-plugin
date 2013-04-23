@@ -131,7 +131,6 @@ public class UrbanDeployPublisher extends Notifier {
     /**
      * Default constructor
      */
-    @DataBoundConstructor
     public UrbanDeployPublisher(String siteName, String component, String versionName, String directoryOffset, String baseDir,
                                 String fileIncludePatterns, String fileExcludePatterns, Boolean skip, Boolean deploy,
                                 String deployApp, String deployEnv, String deployProc) {
@@ -173,6 +172,9 @@ public class UrbanDeployPublisher extends Notifier {
     }
 
     public String getBaseDir() {
+        if (baseDir == null || baseDir.length() == 0) {
+            baseDir = "${WORKSPACE}";
+        }
         return baseDir;
     }
 
@@ -208,6 +210,9 @@ public class UrbanDeployPublisher extends Notifier {
     }
 
     public String getVersionName() {
+        if (versionName == null || versionName.length() == 0) {
+            versionName = "${BUILD_NUMBER}";
+        }
         return versionName;
     }
 
