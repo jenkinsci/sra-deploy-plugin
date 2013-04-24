@@ -263,9 +263,10 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
         uriBuilder.queryParam("component", componentName);
         uriBuilder.queryParam("name", versionName);
         URI uri = uriBuilder.build();
-        
+  
         listener.getLogger().println("Creating new version \""+versionName+
                 "\" on component "+componentName+"...");
+        listener.getLogger().println("Calling URI \""+uri.toString()+"\"...");
         site.executeJSONPost(uri);
         listener.getLogger().println("Successfully created new component version.");
     }
