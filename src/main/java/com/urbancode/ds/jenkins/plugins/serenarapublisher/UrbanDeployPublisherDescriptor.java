@@ -139,9 +139,9 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
      */
     @Override
     public String getHelpFile() {
-        return "/plugin/serenarapublisher/help.html";
+        return "/plugin/sra-deploy/help.html";
     }
-
+    
     @Override
     public boolean isApplicable(Class<? extends AbstractProject> jobType) {
         return true;
