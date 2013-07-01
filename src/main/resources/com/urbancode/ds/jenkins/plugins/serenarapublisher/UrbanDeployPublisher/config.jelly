@@ -15,6 +15,11 @@
       <f:entry title="Component" help="${helpURL}/help-component.html">
         <f:textbox name="urbandeploypublisher.component" value="${instance.component}" />
       </f:entry>
+      <f:entry>
+        <f:validateButton
+            title="${%Test Component}" progress="${%Testing...}"
+            method="testComponentExists" with="urbandeploypublisher.component,urbandeploypublisher.siteName"/>
+        </f:entry>
 
       <f:entry title="Base Artifact Directory" help="${helpURL}/help-basedir.html">
         <f:textbox name="urbandeploypublisher.baseDir" value="${instance.baseDir}" default="${WORKSPACE}"/>
@@ -45,12 +50,27 @@
          <f:entry title="Deploy Application" help="${helpURL}/help-deployapp.html">
             <f:textbox name="urbandeploypublisher.deployApp" value="${instance.deployApp}" />
          </f:entry>
+       <f:entry>
+          <f:validateButton
+              title="${%Test Application}" progress="${%Testing...}"
+              method="testApplicationExists" with="urbandeploypublisher.deployApp,urbandeploypublisher.siteName"/>
+      </f:entry>
          <f:entry title="Deploy Environment" help="${helpURL}/help-deployenv.html">
             <f:textbox name="urbandeploypublisher.deployEnv" value="${instance.deployEnv}" />
          </f:entry>
+      <f:entry>
+          <f:validateButton
+              title="${%Test Environment}" progress="${%Testing...}"
+              method="testEnvironmentExists" with="urbandeploypublisher.deployEnv,urbandeploypublisher.deployApp,urbandeploypublisher.siteName"/>
+      </f:entry>
          <f:entry title="Deploy Process" help="${helpURL}/help-deployproc.html">
             <f:textbox name="urbandeploypublisher.deployProc" value="${instance.deployProc}"/>
          </f:entry>
+      <f:entry>
+        <f:validateButton
+            title="${%Test Process}" progress="${%Testing...}"
+            method="testApplicationProcessExists" with="urbandeploypublisher.deployProc,urbandeploypublisher.deployApp,urbandeploypublisher.siteName"/>
+      </f:entry>
       </f:optionalBlock>
       
     </table>

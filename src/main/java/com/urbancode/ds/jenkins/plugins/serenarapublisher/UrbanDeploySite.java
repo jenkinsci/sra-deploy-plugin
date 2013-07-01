@@ -242,6 +242,26 @@ public class UrbanDeploySite implements Serializable {
         executeJSONGet(uri);
     }
 
+    public void verifyComponentExists(String componentName) throws Exception {
+        URI uri = UriBuilder.fromPath(url).path("cli").path("component").path("info").queryParam("component", componentName).build();
+        executeJSONGet(uri);
+    }
+
+    public void verifyApplicationExists(String applicationName) throws Exception {
+        URI uri = UriBuilder.fromPath(url).path("cli").path("application").path("info").queryParam("application", applicationName).build();
+        executeJSONGet(uri);
+    }
+
+    public void verifyEnvironmentExists(String environmentName, String applicationName) throws Exception {
+        URI uri = UriBuilder.fromPath(url).path("cli").path("environment").path("info").queryParam("environment", environmentName).queryParam("application", applicationName).build();
+        executeJSONGet(uri);
+    }
+
+    public void verifyApplicationProcessExists(String applicationProcess, String applicationName) throws Exception {
+        URI uri = UriBuilder.fromPath(url).path("cli").path("applicationProcess").path("info").queryParam("application", applicationName).queryParam("applicationProcess", applicationProcess).build();
+        executeJSONGet(uri);
+    }
+
     public String executeJSONGet(URI uri) throws Exception {
         String result = null;
         HttpClient httpClient = new HttpClient();
