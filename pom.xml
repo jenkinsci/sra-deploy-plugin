@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.504</version>
+        <version>1.540</version>
     </parent>
 
   <groupId>com.urbancode.ds.jenkins.plugins</groupId>
@@ -28,20 +28,48 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>maven-plugin</artifactId>
-            <optional>true</optional>
+            <groupId>org.codehaus.jettison</groupId>
+            <artifactId>jettison</artifactId>
+            <version>1.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>1.17.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-bundle</artifactId>
+            <version>1.17.1</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>jsr311-api</artifactId>
+            <version>1.1.1</version>
         </dependency>
         <dependency>
             <groupId>com.urbancode.vfs</groupId>
-            <artifactId>urbancode-vfs-client-all</artifactId>
-            <version>1.0.0</version>
+            <artifactId>serenara-client</artifactId>
+            <version>CURRENT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>10.0.1</version>
+            <groupId>com.urbancode.vfs</groupId>
+            <artifactId>serenara-vfs</artifactId>
+            <version>CURRENT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.urbancode.vfs</groupId>
+            <artifactId>commons-fileutils</artifactId>
+            <version>CURRENT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.urbancode.vfs</groupId>
+            <artifactId>commons-util</artifactId>
+            <version>CURRENT</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

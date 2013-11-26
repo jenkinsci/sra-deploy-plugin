@@ -1,5 +1,5 @@
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-  <j:set var="helpURL" value="/plugin/serenarapublisher"/>
+  <j:set var="helpURL" value="/plugin/sra-deploy"/>
 
   <f:section title="Serena RA Server">
     <f:entry title="">
