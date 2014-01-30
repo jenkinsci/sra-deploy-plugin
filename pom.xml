@@ -9,7 +9,7 @@
 
   <groupId>com.urbancode.ds.jenkins.plugins</groupId>
   <artifactId>sra-deploy</artifactId>
-  <version>1.4.2.4-SNAPSHOT</version>
+  <version>1.4.2.4</version>
   <packaging>hpi</packaging>
   <name>Serena SRA Deploy</name>
   <description>Serena SRA Deploy for Jenkins</description>
