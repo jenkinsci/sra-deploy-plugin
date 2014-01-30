@@ -112,7 +112,7 @@ public class UrbanDeploySite implements Serializable {
             this.url = this.url.replaceAll("\\\\", "/");
         }
         while (this.url != null && this.url.endsWith("/")) {
-            this.url = this.url.substring(0, this.url.length() - 2);
+            this.url = this.url.substring(0, this.url.length() - 1);
         }
 	}
 
