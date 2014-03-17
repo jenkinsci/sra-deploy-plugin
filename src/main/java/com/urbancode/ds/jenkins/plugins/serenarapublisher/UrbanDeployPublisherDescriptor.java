@@ -164,6 +164,22 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
     }
 
     /**
+     * The getter of the site.
+     *
+     * @return the deploy site object.
+     */
+    public UrbanDeploySite getSiteByName(String siteName) {
+        UrbanDeploySite urbanDeploySite = null;
+        for (UrbanDeploySite site : sites) {
+            if (siteName.equals(site.getDisplayName())) {
+                urbanDeploySite = site;
+                break;
+            }
+        }
+        return urbanDeploySite;
+    }
+    
+    /**
      * {@inheritDoc}
      *
      * @param req {@inheritDoc}
@@ -258,7 +274,8 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
         return notif;
     }
 
-    public void doTestConnection(StaplerRequest req, StaplerResponse rsp, @QueryParameter("ud.url") final String url,
+    public void doTestConnection(StaplerRequest req, StaplerResponse rsp,
+                                 @QueryParameter("ud.url") final String url,
                                  @QueryParameter("ud.user") final String user,
                                  @QueryParameter("ud.password") final String password)
             throws IOException, ServletException {
@@ -272,6 +289,80 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
                 }
                 catch (Exception e) {
                     error(e.getMessage());
+                }
+            }
+        }.process();
+    }
+    
+    public void doTestComponentExists(StaplerRequest req, StaplerResponse rsp,
+                                      @QueryParameter("urbandeploypublisher.component") final String component,
+                                      @QueryParameter("urbandeploypublisher.siteName") final String siteName)
+    throws IOException, ServletException {
+        new FormFieldValidator(req, rsp, true) {
+            protected void check()
+            throws IOException, ServletException {
+                try {
+                    UrbanDeploySite site = UrbanDeployPublisherDescriptor.this.getSiteByName(siteName);
+                    site.verifyComponentExists(component);
+                    ok("Component \"" + component + "\" was found");
+                } catch (Exception e) {
+                    error("Component \"" + component + "\" was not found!");
+                }
+            }
+        }.process();
+    }
+    
+    public void doTestApplicationExists(StaplerRequest req, StaplerResponse rsp,
+                                        @QueryParameter("urbandeploypublisher.deployApp") final String application,
+                                        @QueryParameter("urbandeploypublisher.siteName") final String siteName)
+    throws IOException, ServletException {
+        new FormFieldValidator(req, rsp, true) {
+            protected void check()
+            throws IOException, ServletException {
+                try {
+                    UrbanDeploySite site = UrbanDeployPublisherDescriptor.this.getSiteByName(siteName);
+                    site.verifyApplicationExists(application);
+                    ok("Application \"" + application + "\" was found");
+                } catch (Exception e) {
+                    error("Application \"" + application + "\" was not found!");
+                }
+            }
+        }.process();
+    }
+    
+    public void doTestEnvironmentExists(StaplerRequest req, StaplerResponse rsp,
+                                        @QueryParameter("urbandeploypublisher.deployEnv") final String environment,
+                                        @QueryParameter("urbandeploypublisher.deployApp") final String application,
+                                        @QueryParameter("urbandeploypublisher.siteName") final String siteName)
+    throws IOException, ServletException {
+        new FormFieldValidator(req, rsp, true) {
+            protected void check()
+            throws IOException, ServletException {
+                try {
+                    UrbanDeploySite site = UrbanDeployPublisherDescriptor.this.getSiteByName(siteName);
+                    site.verifyEnvironmentExists(environment, application);
+                    ok("Environment \"" + environment + "\" for application \"" + application + "\" was found");
+                } catch (Exception e) {
+                    error("Environment \"" + environment + "\" for application \"" + application + "\" was not found");
+                }
+            }
+        }.process();
+    }
+    
+    public void doTestApplicationProcessExists(StaplerRequest req, StaplerResponse rsp,
+                                               @QueryParameter("urbandeploypublisher.deployProc") final String applicationProcess,
+                                               @QueryParameter("urbandeploypublisher.deployApp") final String application,
+                                               @QueryParameter("urbandeploypublisher.siteName") final String siteName)
+    throws IOException, ServletException {
+        new FormFieldValidator(req, rsp, true) {
+            protected void check()
+            throws IOException, ServletException {
+                try {
+                    UrbanDeploySite site = UrbanDeployPublisherDescriptor.this.getSiteByName(siteName);
+                    site.verifyApplicationProcessExists(applicationProcess, application);
+                    ok("Process \"" + applicationProcess + "\" for application \"" + application + "\" was found");
+                } catch (Exception e) {
+                    error("Process \"" + applicationProcess + "\" for application \"" + application + "\" was not found");
                 }
             }
         }.process();
