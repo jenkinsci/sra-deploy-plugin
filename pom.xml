@@ -4,15 +4,15 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.549</version>
+        <version>1.554.1</version>
     </parent>
     
   <groupId>com.urbancode.ds.jenkins.plugins</groupId>
   <artifactId>sra-deploy</artifactId>
-  <version>1.4.2.5-SNAPSHOT</version>
+  <version>1.5.0.1-SNAPSHOT</version>
   <packaging>hpi</packaging>
-  <name>Serena SRA Deploy</name>
-  <description>Serena SRA Deploy for Jenkins</description>
+  <name>Serena SDA Deploy</name>
+  <description>Serena SDA Deploy for Jenkins</description>
   <url>http://wiki.jenkins-ci.org/display/JENKINS/Serena+Deploy+Plugin</url>
 
     <developers>
@@ -27,25 +27,35 @@
     </developers>
 
     <dependencies>
+        <!-- include later version of log4j for version uploading -->
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+        </dependency>
         <dependency>
             <groupId>org.codehaus.jettison</groupId>
             <artifactId>jettison</artifactId>
             <version>1.3</version>
+			<scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-client</artifactId>
             <version>1.17.1</version>
+			<scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-bundle</artifactId>
             <version>1.17.1</version>
+			<scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>javax.ws.rs</groupId>
             <artifactId>jsr311-api</artifactId>
             <version>1.1.1</version>
+			<scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.urbancode.vfs</groupId>
@@ -70,6 +80,12 @@
             <artifactId>commons-util</artifactId>
             <version>CURRENT</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.serenara.vfs</groupId>
+            <artifactId>vfsclient</artifactId>
+            <version>1.0</version>
+			<scope>provided</scope>
         </dependency>
     </dependencies>
 
@@ -96,6 +112,17 @@
                 <version>2.4.3</version>
                 <configuration>
                     <forkMode>always</forkMode>
+                    <excludes>
+                        <exclude>InjectedTest.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <!-- change classloader to load our own libraries loaded before Jenkins -->
+            <plugin>
+                <groupId>org.jenkins-ci.tools</groupId>
+                <artifactId>maven-hpi-plugin</artifactId>
+                <configuration>
+                    <pluginFirstClassLoader>true</pluginFirstClassLoader>
                 </configuration>
             </plugin>
         </plugins>

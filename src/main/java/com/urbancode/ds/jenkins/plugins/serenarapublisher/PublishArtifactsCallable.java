@@ -1,5 +1,5 @@
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -90,7 +90,9 @@ import hudson.remoting.Callable;
 import java.io.File;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.ws.rs.core.UriBuilder;
@@ -121,6 +123,20 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
     final private String resolvedComponent;
     final private String resolvedVersionName;
     final private BuildListener listener;
+
+    public String versionId; // the unique id for the version that was created
+    public void setVersionId(String verId) {
+        this.versionId = verId;
+    }
+    public String getVersionId() {
+        return versionId;
+    }
+
+    public List<String> fileList = new ArrayList<String>(); // the list of files that we have uploaded
+    public void setFileList(List<String> fileList) {
+        this.fileList = fileList;
+    }
+    public List<String> getFileList() { return fileList; }
     
     public PublishArtifactsCallable(String resolvedBaseDir, String resolvedDirectoryOffset, UrbanDeploySite udSite,
             String resolvedFileIncludePatterns, String resolvedFileExcludePatterns, String resolvedComponent,
@@ -166,9 +182,11 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
         String[] excludesArray = new String[excludesSet.size()];
         excludesArray = (String[]) excludesSet.toArray(excludesArray);
 
-
         listener.getLogger().println("Connecting to " + udSite.getUrl());
-        createComponentVersion(udSite, resolvedComponent, resolvedVersionName, listener);
+        String verJson = createComponentVersion(udSite, resolvedComponent, resolvedVersionName, listener);
+        JSONObject verObj = new JSONObject(verJson);
+        setVersionId(verObj.getString("id"));
+
         listener.getLogger().println("Working Directory: " + workDir.getPath());
         listener.getLogger().println("Includes: " + resolvedFileIncludePatterns);
         listener.getLogger().println("Excludes: " + (resolvedFileExcludePatterns == null ? "" : resolvedFileExcludePatterns));
@@ -191,6 +209,7 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
                 for (ClientPathEntry entry : entries) {
                     File entryFile = new File(workDir, entry.getPath());
                     listener.getLogger().println("Adding " + entry.getPath() + " to staging directory...");
+                    fileList.add(entry.getPath()); // add to file list for subsequent report
                     client.addFileToStagingDirectory(stageId, entry.getPath(), entryFile);
                 }
     
@@ -254,7 +273,7 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
         return result;
     }
 
-    private void createComponentVersion(UrbanDeploySite site, String componentName,
+    private String createComponentVersion(UrbanDeploySite site, String componentName,
             String versionName, BuildListener listener)
     throws Exception {
         UriBuilder uriBuilder = UriBuilder.fromPath(site.getUrl()).path("cli").path("version")
@@ -267,7 +286,8 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
         listener.getLogger().println("Creating new version \""+versionName+
                 "\" on component "+componentName+"...");
         listener.getLogger().println("Calling URI \""+uri.toString()+"\"...");
-        site.executeJSONPost(uri);
+        String jsonOut = site.executeJSONPost(uri, "");
         listener.getLogger().println("Successfully created new component version.");
+        return jsonOut;
     }
 }

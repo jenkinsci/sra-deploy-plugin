@@ -1,5 +1,5 @@
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -108,12 +108,18 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
      * <p> This class holds the metadata for the UrbanDeployPublisher. </p>
      */
     private final CopyOnWriteList<UrbanDeploySite> sites = new CopyOnWriteList<UrbanDeploySite>();
+
     /**
      * The default constructor.
      */
     public UrbanDeployPublisherDescriptor() {
         super(UrbanDeployPublisher.class);
         load();
+    }
+
+    @Override
+    public void load() {
+        super.load();
     }
 
     /**
@@ -126,7 +132,7 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
      */
     @Override
     public String getDisplayName() {
-        return "Publish artifacts to Serena RA";
+        return "Publish artifacts to Serena DA";
     }
 
     /**
@@ -178,7 +184,7 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
         }
         return urbanDeploySite;
     }
-    
+
     /**
      * {@inheritDoc}
      *
@@ -196,10 +202,12 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
     @Override
     public Notifier newInstance(StaplerRequest req, JSONObject formData)
             throws FormException {
- 
-        Boolean skip = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("urbandeploypublisher.skip")));
-        Boolean deploy = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("urbandeploypublisher.deploy")));
-                
+
+        boolean skip = "on".equals(req.getParameter("urbandeploypublisher.skip"));
+        boolean deploy = "on".equals(req.getParameter("urbandeploypublisher.deploy"));
+        boolean addStatus = "on".equals(req.getParameter("urbandeploypublisher.addStatus"));
+        boolean runProcess = "on".equals(req.getParameter("urbandeploypublisher.runProcess"));
+
         String siteName = req.getParameter("urbandeploypublisher.siteName");
         
         if (siteName != null) {
@@ -218,7 +226,6 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
             versionName = Util.fixNull(req.getParameter("urbandeploypublisher.versionName").trim());
         }
 
-        
         String directoryOffset = req.getParameter("urbandeploypublisher.directoryOffset");
         
         if (directoryOffset != null) {
@@ -243,6 +250,18 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
             fileExcludePatterns = Util.fixNull(req.getParameter("urbandeploypublisher.fileExcludePatterns").trim());
         }
 
+        String statusName = req.getParameter("urbandeploypublisher.statusName");
+
+        if (statusName != null) {
+            statusName = Util.fixNull(req.getParameter("urbandeploypublisher.statusName").trim());
+        }
+
+        String deployIf = req.getParameter("urbandeploypublisher.deployIf");
+
+        if (deployIf != null) {
+            deployIf = Util.fixNull(req.getParameter("urbandeploypublisher.deployIf").trim());
+        }
+
         String deployApp = req.getParameter("urbandeploypublisher.deployApp");
         
         if (deployApp != null) {
@@ -261,18 +280,125 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
             deployProc = Util.fixNull(req.getParameter("urbandeploypublisher.deployProc").trim());
         }
 
-        UrbanDeployPublisher notif = new UrbanDeployPublisher(siteName, component,
+        String deployProps = req.getParameter("urbandeploypublisher.deployProps");
+
+        if (deployProps != null) {
+            deployProps = Util.fixNull(req.getParameter("urbandeploypublisher.deployProps").trim());
+        }
+
+        String processIf = req.getParameter("urbandeploypublisher.processIf");
+
+        if (processIf != null) {
+            processIf = Util.fixNull(req.getParameter("urbandeploypublisher.processIf").trim());
+        }
+
+        String processName = req.getParameter("urbandeploypublisher.processName");
+
+        if (processName != null) {
+            processName = Util.fixNull(req.getParameter("urbandeploypublisher.processName").trim());
+        }
+
+        String resourceName = req.getParameter("urbandeploypublisher.resourceName");
+
+        if (resourceName != null) {
+            resourceName = Util.fixNull(req.getParameter("urbandeploypublisher.resourceName").trim());
+        }
+
+        String processProps = req.getParameter("urbandeploypublisher.processProps");
+
+        if (processProps != null) {
+            processProps = Util.fixNull(req.getParameter("urbandeploypublisher.processProps").trim());
+        }
+
+        UrbanDeployPublisher notif = new UrbanDeployPublisher(siteName, skip, component,
                                                               versionName, directoryOffset,
                                                               baseDir,
                                                               fileIncludePatterns,
                                                               fileExcludePatterns,
-                                                              skip, deploy,
+                                                              addStatus, statusName,
+                                                              deploy, deployIf,
                                                               deployApp,
                                                               deployEnv,
-                                                              deployProc);
+                                                              deployProc,
+                                                              deployProps,
+                                                              runProcess, processIf,
+                                                              processName,
+                                                              resourceName,
+                                                              processProps);
         
         return notif;
     }
+
+    //
+    // form field validation methods
+    //
+
+    public FormValidation doCheckComponentName(@QueryParameter String value,
+                                               @QueryParameter("urbandeploypublisher.skip") final Boolean skip)
+            throws IOException, ServletException {
+        if (skip == false && value.length() == 0) {
+            return FormValidation.error("Please enter a value for the Component Name");
+        }
+        return FormValidation.ok();
+    }
+
+    public FormValidation doCheckStatusName(@QueryParameter String value,
+                                            @QueryParameter("urbandeploypublisher.addStatus") final Boolean addStatus)
+            throws IOException, ServletException {
+        if (addStatus == true && value.length() == 0) {
+            return FormValidation.error("Please enter a value for the Version Status");
+        }
+        return FormValidation.ok();
+    }
+
+    public FormValidation doCheckApplicationName(@QueryParameter String value,
+                                                 @QueryParameter("urbandeploypublisher.deploy") final Boolean deploy)
+            throws IOException, ServletException {
+        if (deploy == true && value.length() == 0) {
+            return FormValidation.error("Please enter a value for the Application Name");
+        }
+        return FormValidation.ok();
+    }
+
+    public FormValidation doCheckEnvironmentName(@QueryParameter String value,
+                                                 @QueryParameter("urbandeploypublisher.deploy") final Boolean deploy)
+            throws IOException, ServletException {
+        if (deploy == true && value.length() == 0) {
+            return FormValidation.error("Please enter a value for the Environment Name");
+        }
+        return FormValidation.ok();
+    }
+
+    public FormValidation doCheckDeploymentProcessName(@QueryParameter String value,
+                                                       @QueryParameter("urbandeploypublisher.deploy") final Boolean deploy)
+            throws IOException, ServletException {
+        if (deploy == true && value.length() == 0) {
+            return FormValidation.error("Please enter a value for the Deployment Process Name");
+        }
+        return FormValidation.ok();
+    }
+
+    public FormValidation doCheckProcessName(@QueryParameter String value,
+                                             @QueryParameter("urbandeploypublisher.runProcess") final Boolean runProcess)
+            throws IOException, ServletException {
+        if (runProcess == true && value.length() == 0) {
+            return FormValidation.error("Please enter a value for the Process Name");
+        }
+        return FormValidation.ok();
+    }
+
+    public FormValidation doCheckResourceName(@QueryParameter String value,
+                                              @QueryParameter("urbandeploypublisher.runProcess") final Boolean runProcess)
+            throws IOException, ServletException {
+        if (runProcess == true && value.length() == 0) {
+            return FormValidation.error("Please enter a value for the Resource Name");
+        }
+        return FormValidation.ok();
+    }
+
+    //
+    // data validation methods that communicate with SDA to check validity
+    //
 
     public void doTestConnection(StaplerRequest req, StaplerResponse rsp,
                                  @QueryParameter("ud.url") final String url,
@@ -293,7 +419,25 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
             }
         }.process();
     }
-    
+
+    public void doTestVersionStatusExists(StaplerRequest req, StaplerResponse rsp,
+                                      @QueryParameter("urbandeploypublisher.statusName") final String statusName,
+                                      @QueryParameter("urbandeploypublisher.siteName") final String siteName)
+            throws IOException, ServletException {
+        new FormFieldValidator(req, rsp, true) {
+            protected void check()
+                    throws IOException, ServletException {
+                try {
+                    UrbanDeploySite site = UrbanDeployPublisherDescriptor.this.getSiteByName(siteName);
+                    site.verifyStatusExists(statusName);
+                    ok("Version Status \"" + statusName + "\" was found");
+                } catch (Exception e) {
+                    error("Version Status \"" + statusName + "\" was not found!");
+                }
+            }
+        }.process();
+    }
+
     public void doTestComponentExists(StaplerRequest req, StaplerResponse rsp,
                                       @QueryParameter("urbandeploypublisher.component") final String component,
                                       @QueryParameter("urbandeploypublisher.siteName") final String siteName)
@@ -363,6 +507,42 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
                     ok("Process \"" + applicationProcess + "\" for application \"" + application + "\" was found");
                 } catch (Exception e) {
                     error("Process \"" + applicationProcess + "\" for application \"" + application + "\" was not found");
+                }
+            }
+        }.process();
+    }
+
+    public void doTestProcessExists(StaplerRequest req, StaplerResponse rsp,
+                                   @QueryParameter("urbandeploypublisher.processName") final String processName,
+                                   @QueryParameter("urbandeploypublisher.siteName") final String siteName)
+            throws IOException, ServletException {
+        new FormFieldValidator(req, rsp, true) {
+            protected void check()
+                    throws IOException, ServletException {
+                try {
+                    UrbanDeploySite site = UrbanDeployPublisherDescriptor.this.getSiteByName(siteName);
+                    site.verifyProcessExists(processName);
+                    ok("Process \"" + processName + "\" was found");
+                } catch (Exception e) {
+                    error("Process \"" + processName + "\" was not found");
+                }
+            }
+        }.process();
+    }
+
+    public void doTestResourceExists(StaplerRequest req, StaplerResponse rsp,
+                                    @QueryParameter("urbandeploypublisher.resourceName") final String resourceName,
+                                    @QueryParameter("urbandeploypublisher.siteName") final String siteName)
+            throws IOException, ServletException {
+        new FormFieldValidator(req, rsp, true) {
+            protected void check()
+                    throws IOException, ServletException {
+                try {
+                    UrbanDeploySite site = UrbanDeployPublisherDescriptor.this.getSiteByName(siteName);
+                    site.verifyResourceExists(resourceName);
+                    ok("Resource \"" + resourceName + "\" was found");
+                } catch (Exception e) {
+                    error("Resource \"" + resourceName + "\" was not found");
                 }
             }
         }.process();

@@ -1,5 +1,5 @@
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -92,15 +92,18 @@ import hudson.model.AbstractBuild;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.ws.rs.core.UriBuilder;
 
-import org.kohsuke.stapler.DataBoundConstructor;
+import org.codehaus.jettison.json.JSONObject;
 
 /**
  * <p> This class implements the UrbanDeploy publisher process by using the {@link
@@ -115,37 +118,59 @@ public class UrbanDeployPublisher extends Notifier {
     public static final UrbanDeployPublisherDescriptor DESCRIPTOR = new UrbanDeployPublisherDescriptor();
 
     private String siteName;
+    private Boolean skip = false;
     private String component;
     private String baseDir;
     private String directoryOffset;
     private String fileIncludePatterns;
     private String fileExcludePatterns;
     private String versionName;
-    private Boolean skip = false;
+    private Boolean addStatus = false;
+    private String statusName;
     private Boolean deploy = false;
+    private String deployIf;
     private String deployApp;
     private String deployEnv;
     private String deployProc;
+    private String deployProps;
+    private Boolean runProcess = false;
+    private String processIf;
+    private String processName;
+    private String resourceName;
+    private String processProps;
     private Map<String, String> envMap = null;
 
     /**
      * Default constructor
      */
-    public UrbanDeployPublisher(String siteName, String component, String versionName, String directoryOffset, String baseDir,
-                                String fileIncludePatterns, String fileExcludePatterns, Boolean skip, Boolean deploy,
-                                String deployApp, String deployEnv, String deployProc) {
+    public UrbanDeployPublisher(String siteName, Boolean skip, String component, String versionName, String directoryOffset, String baseDir,
+                                String fileIncludePatterns, String fileExcludePatterns,
+                                Boolean addStatus, String statusName,
+                                Boolean deploy, String deployIf,
+                                String deployApp, String deployEnv, String deployProc, String deployProps,
+                                Boolean runProcess, String processIf,
+                                String processName, String resourceName, String processProps) {
+        this.siteName = siteName;
+        this.skip = skip;
         this.component = component;
         this.versionName = versionName;
         this.baseDir = baseDir;
         this.directoryOffset = directoryOffset;
         this.fileIncludePatterns = fileIncludePatterns;
         this.fileExcludePatterns = fileExcludePatterns;
-        this.siteName = siteName;
-        this.skip = skip;
+        this.addStatus = addStatus;
+        this.statusName = statusName;
         this.deploy = deploy;
+        this.deployIf = deployIf;
         this.deployApp = deployApp;
         this.deployEnv = deployEnv;
         this.deployProc = deployProc;
+        this.deployProps = deployProps;
+        this.runProcess = runProcess;
+        this.processIf = processIf;
+        this.processName = processName;
+        this.resourceName = resourceName;
+        this.processProps = processProps;
     }
 
     public String getSiteName() {
@@ -161,6 +186,14 @@ public class UrbanDeployPublisher extends Notifier {
 
     public void setSiteName(String siteName) {
         this.siteName = siteName;
+    }
+
+    public void setSkip(boolean skip) {
+        this.skip = skip;
+    }
+
+    public boolean isSkip() {
+        return Boolean.TRUE.equals(this.skip);
     }
 
     public String getComponent() {
@@ -209,6 +242,22 @@ public class UrbanDeployPublisher extends Notifier {
         this.fileExcludePatterns = fileExcludePatterns;
     }
 
+    public void setAddStatus(boolean addStatus) {
+        this.addStatus = addStatus;
+    }
+
+    public boolean isAddStatus() {
+        return Boolean.TRUE.equals(this.addStatus);
+    }
+
+    public String getStatusName() {
+        return statusName;
+    }
+
+    public void setStatusName(String statusName) {
+        this.statusName = statusName;
+    }
+
     public String getVersionName() {
         if (versionName == null || versionName.length() == 0) {
             versionName = "${BUILD_NUMBER}";
@@ -220,20 +269,20 @@ public class UrbanDeployPublisher extends Notifier {
         this.versionName = versionName;
     }
 
-    public void setSkip(boolean skip) {
-        this.skip = skip;
-    }
-
-    public boolean isSkip() {
-        return skip;
-    }
-
     public void setDeploy(boolean deploy) {
         this.deploy = deploy;
     }
 
     public boolean isDeploy() {
-        return deploy;
+        return Boolean.TRUE.equals(this.deploy);
+    }
+
+    public void setDeployIf(String deployIf) {
+        this.deployIf = deployIf;
+    }
+
+    public String getDeployIf() {
+        return deployIf;
     }
 
     public void setDeployApp(String deployApp) {
@@ -258,6 +307,54 @@ public class UrbanDeployPublisher extends Notifier {
 
     public String getDeployProc() {
         return deployProc;
+    }
+
+    public void setDeployProps(String deployProps) {
+        this.deployProps = deployProps;
+    }
+
+    public String getDeployProps() {
+        return deployProps;
+    }
+
+    public void setRunProcess(boolean runProcess) {
+        this.runProcess = runProcess;
+    }
+
+    public boolean isRunProcess() {
+        return Boolean.TRUE.equals(this.runProcess);
+    }
+
+    public void setProcessIf(String processIf) {
+        this.processIf = processIf;
+    }
+
+    public String getProcessIf() {
+        return processIf;
+    }
+
+    public void setProcessName(String processName) {
+        this.processName = processName;
+    }
+
+    public String getProcessName() {
+        return processName;
+    }
+
+    public void setResourceName(String resourceName) {
+        this.resourceName = resourceName;
+    }
+
+    public String getResourceName() {
+        return resourceName;
+    }
+
+    public void setProcessProps(String processProps) {
+        this.processProps = processProps;
+    }
+
+    public String getProcessProps() {
+        return processProps;
     }
 
     /**
@@ -300,30 +397,96 @@ public class UrbanDeployPublisher extends Notifier {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
             throws InterruptedException, IOException {
+
+        UrbanDeploySite udSite = getSite();
+        String versionURI = null;
+        String status = null;
+        String deployURI = null;
+        String processURI = null;
+        List<String> fileList = new ArrayList<String>();
+
         if (isSkip()) {
-            listener.getLogger().println("Skip artifacts upload to SerenaRA - step disabled.");
+            listener.getLogger().println("Skipping artifacts upload to Serena DA.");
         }
         else if (build.getResult() == Result.FAILURE || build.getResult() == Result.ABORTED) {
-            listener.getLogger().println("Skip artifacts upload to SerenaRA - build failed or aborted.");
+            listener.getLogger().println("Skipping artifacts upload to Serena DA - build failed or aborted.");
+            return false;
         }
         else {
+            listener.getLogger().println("Artifacts upload is enabled.");
             envMap = build.getEnvironment(listener);
-            
+
+            String resolvedStatusName = resolveVariables(getStatusName());
             String resolvedComponent = resolveVariables(getComponent());
             String resolvedBaseDir = resolveVariables(getBaseDir());
             String resolvedVersionName = resolveVariables(getVersionName());
             String resolvedFileIncludePatterns = resolveVariables(fileIncludePatterns);
             String resolvedFileExcludePatterns = resolveVariables(fileExcludePatterns);
             String resolvedDirectoryOffset = resolveVariables(directoryOffset);
+            String resolvedDeployProperties = resolveVariables(getDeployProps());
+            String resolvedDeployIf = resolveVariables(getDeployIf());
 
-            UrbanDeploySite udSite = getSite();
+            // iterate over deployment properties to construct JSON string
+            String jsonDeployProperties = "{";
+            if (resolvedDeployProperties == null) {
+                listener.getLogger().println("Deployment properties: none defined");
+            } else {
+                BufferedReader bufReader = new BufferedReader(new StringReader(resolvedDeployProperties));
+                String line;
+                while ((line = bufReader.readLine()) != null) {
+                    String[] parts = line.split("=");
+                    String val = (parts.length == 1 ? "" : parts[1]); // do we have a value
+                    listener.getLogger().println("Deployment property: " + parts[0] + " = " + val);
+                    jsonDeployProperties += ("\"" + parts[0] + "\": \"" + val + "\",");
+                }
+                // remove last comma if it exists
+                if (jsonDeployProperties.endsWith(","))
+                    jsonDeployProperties = jsonDeployProperties.substring(0, jsonDeployProperties.length() - 1);
+            }
+            jsonDeployProperties += "}";
+
             try {
                 PublishArtifactsCallable task = new PublishArtifactsCallable(resolvedBaseDir, resolvedDirectoryOffset,
                         udSite, resolvedFileIncludePatterns, resolvedFileExcludePatterns, resolvedComponent,
                         resolvedVersionName, listener);
                 launcher.getChannel().call(task);
+                String verId = task.getVersionId();
+                fileList = task.getFileList();
 
-                if (isDeploy()) {
+                versionURI = getSite().getUrl() + "/#version/" + verId;
+                listener.getLogger().println("Component version URI is: " + versionURI);
+
+                if (isAddStatus()) {
+                    if (getStatusName() == null || getStatusName().trim().length() == 0) {
+                        throw new Exception("Status Name is a required field if Add Status is selected!");
+                    }
+
+                    listener.getLogger().println("Applying status " + getStatusName() + " to version " + resolvedVersionName);
+                    createAddStatusRequest(udSite, verId, getStatusName());
+                }
+
+                // work out if we should initiate deployment of version
+                Boolean deployAfterUpload = false;
+                // is deployVersionIf override defined
+                if (resolvedDeployIf == null || resolvedDeployIf.length() == 0) {
+                    // no, check deployVersion parameter
+                    if (isDeploy()) {
+                        deployAfterUpload = true;
+                    } else {
+                        deployAfterUpload = false;
+                    }
+                } else {
+                    // yes, check if it is set to true or yes
+                    if (resolvedDeployIf.equals("false") || resolvedDeployIf.equals("no")) {
+                        deployAfterUpload = false;
+                    }
+                    if (resolvedDeployIf.equals("true") || resolvedDeployIf.equals("yes")) {
+                        deployAfterUpload = true;
+                    }
+                }
+                listener.getLogger().println("Deploy after upload is " + deployAfterUpload);
+
+                if (deployAfterUpload) {
                     if (getDeployApp() == null || getDeployApp().trim().length() == 0) {
                         throw new Exception("Deploy Application is a required field if Deploy is selected!");
                     }
@@ -335,30 +498,139 @@ public class UrbanDeployPublisher extends Notifier {
                     }
 
                     listener.getLogger().println("Starting deployment of " + getDeployApp() + " in " + getDeployEnv());
-                    createProcessRequest(udSite, resolvedComponent, resolvedVersionName);
+                    String deployJson = createApplicationProcessRequest(udSite, resolvedComponent, resolvedVersionName, jsonDeployProperties);
+                    JSONObject deployObj = new JSONObject(deployJson);
+                    String requestId = deployObj.getString("requestId");
+                    deployURI = getSite().getUrl() + "/#applicationProcessRequest/" + requestId;
+                    listener.getLogger().println("Deployment request URI is: " + deployURI);
                 }
             }
             catch (Throwable th) {
-                th.printStackTrace(listener.error("Failed to upload files" + th));
+                th.printStackTrace(listener.error("Failed to upload or deploy files" + th));
                 build.setResult(Result.UNSTABLE);
             }
         }
 
+        // run a generic process
+        if (isRunProcess()) {
+
+            envMap = build.getEnvironment(listener);
+
+            String resolvedProcessIf = resolveVariables(getProcessIf());
+            String resolvedProcessProperties = resolveVariables(getProcessProps());
+
+            // iterate over process properties to construct JSON string
+            String jsonProcessProperties = "{";
+            if (resolvedProcessProperties == null) {
+                listener.getLogger().println("Process properties: none defined");
+            } else {
+                BufferedReader bufReader = new BufferedReader(new StringReader(resolvedProcessProperties));
+                String line;
+                while ((line = bufReader.readLine()) != null) {
+                    String[] parts = line.split("=");
+                    String val = (parts.length == 1 ? "" : parts[1]); // do we have a value
+                    listener.getLogger().println("Process property: " + parts[0] + " = " + val);
+                    jsonProcessProperties += ("\"" + parts[0] + "\": \"" + val + "\",");
+                }
+                // remove last comma if it exists
+                if (jsonProcessProperties.endsWith(","))
+                    jsonProcessProperties = jsonProcessProperties.substring(0, jsonProcessProperties.length() - 1);
+            }
+            jsonProcessProperties += "}";
+
+            try {
+                // work out if we should initiate a generic process
+                Boolean processAfterUpload = false;
+                // is runProcessIf override defined
+                if (resolvedProcessIf == null || resolvedProcessIf.equals("")) {
+                    // no, check deployVersion parameter
+                    if (isRunProcess()) {
+                        processAfterUpload = true;
+                    } else {
+                        processAfterUpload = false;
+                    }
+                } else {
+                    // yes, check if it is set to true or yes
+                    if (resolvedProcessIf.equals("false") || resolvedProcessIf.equals("no")) {
+                        processAfterUpload = false;
+                    }
+                    if (resolvedProcessIf.equals("true") || resolvedProcessIf.equals("yes")) {
+                        processAfterUpload = true;
+                    }
+                }
+                listener.getLogger().println("Run process after upload is " + processAfterUpload);
+
+                if (processAfterUpload) {
+                    if (getProcessName() == null || getProcessName().trim().length() == 0) {
+                        throw new Exception("Process Name is a required field if Run Process is selected!");
+                    }
+                    if (getResourceName() == null || getResourceName().trim().length() == 0) {
+                        throw new Exception("Resource Name is a required field if Run Process is selected!");
+                    }
+
+                    listener.getLogger().println("Starting process " + getProcessName() + " on " + getResourceName());
+                    String processJson = createGenericProcessRequest(udSite, processName, resourceName, jsonProcessProperties);
+                    JSONObject processObj = new JSONObject(processJson);
+                    String requestId = processObj.getString("id");
+                    processURI = getSite().getUrl() + "/#processRequest/" + requestId;
+                    listener.getLogger().println("Process request URI is: " + processURI);
+                }
+            } catch (Throwable th) {
+                th.printStackTrace(listener.error("Failed to run generic process" + th));
+                build.setResult(Result.UNSTABLE);
+            }
+        }
+
+        listener.getLogger().println("Generating Deployment report...");
+        String vName = null;
+        if (!isSkip()) {
+            vName = resolveVariables(versionName);
+        }
+        SerenaDAReport report = new SerenaDAReport(vName, versionURI, getStatusName(), getDeployApp(), deployURI,
+                getProcessName(), processURI);
+        report.setFileList(fileList);
+        SerenaDABuildAction buildAction = new SerenaDABuildAction(build, report);
+        build.addAction(buildAction);
+
         return true;
     }
 
-    private void createProcessRequest(UrbanDeploySite site, String componentName, String versionName)
+    private void createAddStatusRequest(UrbanDeploySite site, String versionName, String statusName)
             throws Exception {
+        UriBuilder uriBuilder = UriBuilder.fromPath(site.getUrl()).path("rest").path("deploy").path("version")
+                .path(versionName).path("status").path(statusName);
+        URI uri = uriBuilder.build();
+        String json = "{\"status\":\"" + statusName + "\"}";
+        site.executeJSONPut(uri,json);
+    }
+
+    private String createApplicationProcessRequest(UrbanDeploySite site, String componentName, String versionName,
+                                                   String jsonProperties)
+            throws Exception {
+
         URI uri = UriBuilder.fromPath(site.getUrl()).path("cli").path("applicationProcessRequest")
                 .path("request").build();
         String json =
                 "{\"application\":\"" + getDeployApp() +
                 "\",\"applicationProcess\":\"" + getDeployProc() +
                 "\",\"environment\":\"" + getDeployEnv() +
-                "\",\"versions\":[{\"version\":\"" + versionName +
+                "\",\"properties\":" + jsonProperties +
+                ",\"versions\":[{\"version\":\"" + versionName +
                 "\",\"component\":\"" + componentName + "\"}]}";
-        site.executeJSONPut(uri,json);
 
+        return site.executeJSONPut(uri,json);
+    }
+
+    private String createGenericProcessRequest(UrbanDeploySite site, String processName, String resourceName,
+                                        String jsonProperties)
+            throws Exception {
+
+        URI uri = UriBuilder.fromPath(site.getUrl()).path("rest").path("process").path("request").build();
+        String json =
+                "{\"processId\":\"" + site.getProcessId(processName) +
+                "\",\"resource\":\"" + site.getResourceId(resourceName) +
+                "\",\"properties\":" + jsonProperties + "}";
+        return site.executeJSONPost(uri, json);
     }
 
     private String resolveVariables(String input) {

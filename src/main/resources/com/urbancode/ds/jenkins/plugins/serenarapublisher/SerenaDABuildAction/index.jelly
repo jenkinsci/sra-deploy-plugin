@@ -1,0 +1,60 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:f="/lib/form">
+  <l:layout title="overview-layout" css="/plugin/sra-deploy/css/style.css">
+    <st:include it="${it.build}" page="sidepanel.jelly"/>
+    <l:main-panel>
+      <j:set var="report" value="${it.getSerenaDAReport()}"/>
+      <h1>
+        <img src="${resURL}/plugin/sra-deploy/images/sda_logo.png"/>
+        ${report.getName()} for Build #${it.build.number}
+      </h1>
+
+      <h2>Component Version</h2>
+      <j:if test="${report.getVersionURI() != null}">
+        <p>
+            Created a new component version <strong>${report.getVersionName()}</strong>.
+            (<a target="_blank" href="${report.getVersionURI()}">See details</a>)
+        </p>
+        <j:if test="${report.getStatus()} != null}">
+        and applied the status <strong>${report.getStatus()}</strong> to it
+        </j:if>
+        <p>Uploaded the following files:</p>
+        <ul>
+            <j:set var="files" value="${report.getFileList()}"/>
+            <j:if test="${empty files}">
+                No files upload
+            </j:if>
+            <j:forEach var="file" items="${files}">
+                <li>
+                    ${file}
+                </li>
+            </j:forEach>
+        </ul>
+      </j:if>
+      <j:if test="${report.getVersionURI() == null}">
+        <p>No component version created.</p>
+      </j:if>
+
+      <h2>Deployment</h2>
+      <j:if test="${report.getDeployURI() != null}">
+        <p>
+            Ran the deployment process <strong>${report.getDeployName()}</strong>.
+            (<a target="_blank" href="${report.getDeployURI()}">See details</a>)
+        </p>
+      </j:if>
+      <j:if test="${report.getDeployURI() == null}">
+        <p>No deployment process executed.</p>
+      </j:if>
+
+      <h2>Process Execution</h2>
+      <j:if test="${report.getProcessURI() != null}">
+        <p>
+            Ran the generic process <strong>${report.getProcessName()}</strong>.
+            (<a target="_blank" href="${report.getProcessURI()}">See details</a>)
+        </p>
+      </j:if>
+      <j:if test="${report.getProcessURI() == null}">
+        <p>No generic process was executed.</p>
+      </j:if>
+    </l:main-panel>
+  </l:layout>
+</j:jelly>
