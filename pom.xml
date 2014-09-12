@@ -133,6 +133,11 @@
             <id>repo.jenkins-ci.org</id>
             <url>http://repo.jenkins-ci.org/public/</url>
         </repository>
+        <!-- custom internet repository for SDA jars -->
+        <repository>
+            <id>repo.srnademo.com</id>
+            <url>http://repo.srnademo.com/</url>
+        </repository>
         <repository>
             <id>serena-lib</id>
             <url>file:${project.basedir}/lib/</url>
