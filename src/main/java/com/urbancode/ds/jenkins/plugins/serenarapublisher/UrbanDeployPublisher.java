@@ -103,6 +103,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.ws.rs.core.UriBuilder;
 
+import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
 
 /**
@@ -125,6 +126,8 @@ public class UrbanDeployPublisher extends Notifier {
     private String fileIncludePatterns;
     private String fileExcludePatterns;
     private String versionName;
+    private Boolean addPropertiesToVersion = false;
+    private String versionProps;
     private Boolean addStatus = false;
     private String statusName;
     private Boolean deploy = false;
@@ -145,6 +148,7 @@ public class UrbanDeployPublisher extends Notifier {
      */
     public UrbanDeployPublisher(String siteName, Boolean skip, String component, String versionName, String directoryOffset, String baseDir,
                                 String fileIncludePatterns, String fileExcludePatterns,
+                                String versionProps,
                                 Boolean addStatus, String statusName,
                                 Boolean deploy, String deployIf,
                                 String deployApp, String deployEnv, String deployProc, String deployProps,
@@ -158,6 +162,7 @@ public class UrbanDeployPublisher extends Notifier {
         this.directoryOffset = directoryOffset;
         this.fileIncludePatterns = fileIncludePatterns;
         this.fileExcludePatterns = fileExcludePatterns;
+        this.versionProps = versionProps;
         this.addStatus = addStatus;
         this.statusName = statusName;
         this.deploy = deploy;
@@ -240,6 +245,22 @@ public class UrbanDeployPublisher extends Notifier {
 
     public void setFileExcludePatterns(String fileExcludePatterns) {
         this.fileExcludePatterns = fileExcludePatterns;
+    }
+
+    public void setAddPropertiesToVersion(boolean addStatus) {
+        this.addPropertiesToVersion = addPropertiesToVersion;
+    }
+
+    public boolean isAddPropertiesToVersion() {
+        return Boolean.TRUE.equals(this.addPropertiesToVersion);
+    }
+
+    public void setVersionProps(String versionProps) {
+        this.versionProps = versionProps;
+    }
+
+    public String getVersionProps() {
+        return versionProps;
     }
 
     public void setAddStatus(boolean addStatus) {
@@ -423,8 +444,29 @@ public class UrbanDeployPublisher extends Notifier {
             String resolvedFileIncludePatterns = resolveVariables(fileIncludePatterns);
             String resolvedFileExcludePatterns = resolveVariables(fileExcludePatterns);
             String resolvedDirectoryOffset = resolveVariables(directoryOffset);
+            String resolvedVersionProperties = resolveVariables(getVersionProps());
             String resolvedDeployProperties = resolveVariables(getDeployProps());
             String resolvedDeployIf = resolveVariables(getDeployIf());
+
+            // iterate over version properties to construct JSON string
+            String jsonVersionProperties = "{";
+            if (resolvedVersionProperties == null) {
+                addPropertiesToVersion = false;
+                listener.getLogger().println("Version Properties: none defined");
+            } else {
+                addPropertiesToVersion = true;
+                // iterate over properties
+                BufferedReader bufReader = new BufferedReader(new StringReader(resolvedVersionProperties));
+                String line = null, propName = null, propVal = null;
+                while ((line = bufReader.readLine()) != null) {
+                    String[] parts = line.split("=");
+                    listener.getLogger().println("Version Property: " + parts[0] + " = " + parts[1]);
+                    jsonVersionProperties += ("\"" + parts[0] + "\": \"" + parts[1] + "\",");
+                }
+                // remove last comma if it exists
+                if (jsonVersionProperties.endsWith(",")) jsonVersionProperties = jsonVersionProperties.substring(0, jsonVersionProperties.length() - 1);
+            }
+            jsonVersionProperties += "}";
 
             // iterate over deployment properties to construct JSON string
             String jsonDeployProperties = "{";
@@ -455,6 +497,23 @@ public class UrbanDeployPublisher extends Notifier {
 
                 versionURI = getSite().getUrl() + "/#version/" + verId;
                 listener.getLogger().println("Component version URI is: " + versionURI);
+
+                if (isAddPropertiesToVersion()) {
+                    // get property sheet id
+                    String propSheetId = getComponentVersionPropsheetId(udSite, verId);
+                    listener.getLogger().println("Found component version property sheet id: " + propSheetId);
+                    // get component id
+                    String componentDetails[] = getComponentRepositoryId(udSite, resolvedComponent);
+                    String componentId = componentDetails[0];
+                    listener.getLogger().println("Found component id: " + componentId);
+
+                    // put properties
+                    String encodedPropSheetId = "components%26" + componentId + "%26versions%26" + verId + "%26propSheetGroup%26propSheets%26"
+                            + propSheetId + ".-1/allPropValues";
+                    URI uri = UriBuilder.fromPath(udSite.getUrl()).path("property").path("propSheet").path(encodedPropSheetId).build();
+                    listener.getLogger().println("Calling URI \"" + uri.toString() + "\" with body " + jsonVersionProperties);
+                    udSite.executeJSONPut(uri,jsonVersionProperties);
+                }
 
                 if (isAddStatus()) {
                     if (getStatusName() == null || getStatusName().trim().length() == 0) {
@@ -593,6 +652,49 @@ public class UrbanDeployPublisher extends Notifier {
         build.addAction(buildAction);
 
         return true;
+    }
+
+    public String[] getComponentRepositoryId(UrbanDeploySite site, String componentName)
+            throws Exception {
+        String[] results = new String[2];
+        URI uri = UriBuilder.fromPath(site.getUrl()).path("rest").path("deploy").path("component").path(componentName)
+                .build();
+
+        String componentContent = site.executeJSONGet(uri);
+
+        String componentId = new JSONObject(componentContent).getString("id");
+        results[0] = componentId;
+
+        JSONArray properties = new JSONObject(componentContent).getJSONArray("properties");
+        if (properties != null) {
+            for (int i = 0; i < properties.length(); i++) {
+                JSONObject propertyJson = properties.getJSONObject(i);
+                String propName = propertyJson.getString("name");
+                String propValue = propertyJson.getString("value");
+
+                if ("code_station/repository".equalsIgnoreCase(propName)) {
+                    results[1] = propValue.trim();
+                    break;
+                }
+            }
+        }
+        return results;
+    }
+
+    public String getComponentVersionPropsheetId(UrbanDeploySite site, String verId)
+            throws Exception {
+        URI uri = UriBuilder.fromPath(site.getUrl()).path("rest").path("deploy").path("version")
+                .path(verId).build();
+        String result = null;
+
+        String versionContent = site.executeJSONGet(uri);
+
+        JSONArray propSheets = new JSONObject(versionContent).getJSONArray("propSheets");
+        if (propSheets != null) {
+            JSONObject propertyJson = propSheets.getJSONObject(0);
+            result = propertyJson.getString("id").trim();
+        }
+        return result;
     }
 
     private void createAddStatusRequest(UrbanDeploySite site, String versionName, String statusName)

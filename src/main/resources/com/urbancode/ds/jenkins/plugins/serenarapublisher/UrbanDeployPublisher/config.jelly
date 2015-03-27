@@ -36,6 +36,9 @@
             <f:entry title="Exclude" help="${helpURL}/help-fileexcludes.html">
                 <f:textarea name="urbandeploypublisher.fileExcludePatterns" value="${instance.fileExcludePatterns}" />
             </f:entry>
+            <f:entry title="Version Properties" help="${helpURL}/help-versionprops.html">
+                <f:textarea name="urbandeploypublisher.versionProps" value="${instance.versionProps}"/>
+            </f:entry>
             <f:entry title="Skip publishing (e.g. temporarily)" field="skip">
                 <f:checkbox name="urbandeploypublisher.skip" checked="${instance.skip}" />
             </f:entry>

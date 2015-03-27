@@ -250,6 +250,12 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
             fileExcludePatterns = Util.fixNull(req.getParameter("urbandeploypublisher.fileExcludePatterns").trim());
         }
 
+        String versionProps = req.getParameter("urbandeploypublisher.versionProps");
+
+        if (versionProps != null) {
+            versionProps = Util.fixNull(req.getParameter("urbandeploypublisher.versionProps").trim());
+        }
+
         String statusName = req.getParameter("urbandeploypublisher.statusName");
 
         if (statusName != null) {
@@ -315,6 +321,7 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
                                                               baseDir,
                                                               fileIncludePatterns,
                                                               fileExcludePatterns,
+                                                              versionProps,
                                                               addStatus, statusName,
                                                               deploy, deployIf,
                                                               deployApp,
