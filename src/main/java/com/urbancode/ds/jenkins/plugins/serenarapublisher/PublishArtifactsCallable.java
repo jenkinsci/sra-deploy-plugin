@@ -1,5 +1,5 @@
 /* ===========================================================================
- *  Copyright (c) 2014 Serena Software. All rights reserved.
+ *  Copyright (c) 2015 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -136,7 +136,9 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
     public void setFileList(List<String> fileList) {
         this.fileList = fileList;
     }
-    public List<String> getFileList() { return fileList; }
+    public List<String> getFileList() {
+        return fileList;
+    }
     
     public PublishArtifactsCallable(String resolvedBaseDir, String resolvedDirectoryOffset, UrbanDeploySite udSite,
             String resolvedFileIncludePatterns, String resolvedFileExcludePatterns, String resolvedComponent,
@@ -150,12 +152,10 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
         this.resolvedVersionName = resolvedVersionName;
         this.listener = listener;
     }
-    
-    
-    @Override
+
     public Boolean call() throws Exception {
         File workDir = new File(resolvedBaseDir);
-        if (!workDir.exists()) throw new Exception("Base artifact directory " + workDir.toString()
+        if (!workDir.exists()) throw new Exception("[SDA] Base artifact directory " + workDir.toString()
                 + " does not exist!");
         if (resolvedDirectoryOffset != null && resolvedDirectoryOffset.trim().length() > 0) {
             workDir = new File(workDir, resolvedDirectoryOffset.trim());
@@ -182,14 +182,14 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
         String[] excludesArray = new String[excludesSet.size()];
         excludesArray = (String[]) excludesSet.toArray(excludesArray);
 
-        listener.getLogger().println("Connecting to " + udSite.getUrl());
+        listener.getLogger().println("[SDA] Connecting to " + udSite.getUrl());
         String verJson = createComponentVersion(udSite, resolvedComponent, resolvedVersionName, listener);
         JSONObject verObj = new JSONObject(verJson);
         setVersionId(verObj.getString("id"));
 
-        listener.getLogger().println("Working Directory: " + workDir.getPath());
-        listener.getLogger().println("Includes: " + resolvedFileIncludePatterns);
-        listener.getLogger().println("Excludes: " + (resolvedFileExcludePatterns == null ? "" : resolvedFileExcludePatterns));
+        listener.getLogger().println("[SDA] Working Directory: " + workDir.getPath());
+        listener.getLogger().println("[SDA] Includes: " + resolvedFileIncludePatterns);
+        listener.getLogger().println("[SDA] Excludes: " + (resolvedFileExcludePatterns == null ? "" : resolvedFileExcludePatterns));
 
         Client client = null;
         String stageId = null;
@@ -199,16 +199,16 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
                             FileListerBuilder.Directories.INCLUDE_ALL, FileListerBuilder.Permissions.BEST_EFFORT,
                             FileListerBuilder.Symlinks.AS_LINK, "SHA-256");
     
-            listener.getLogger().println("Invoke vfs client...");
+            listener.getLogger().println("[SDA] Invoke vfs client...");
             client = new Client(udSite.getUrl() + "/vfs", null, null);
             stageId = client.createStagingDirectory();
-            listener.getLogger().println("Created staging directory: " + stageId);
+            listener.getLogger().println("[SDA] Created staging directory: " + stageId);
     
             if (entries.length > 0) {
     
                 for (ClientPathEntry entry : entries) {
                     File entryFile = new File(workDir, entry.getPath());
-                    listener.getLogger().println("Adding " + entry.getPath() + " to staging directory...");
+                    listener.getLogger().println("[SDA] Adding " + entry.getPath() + " to staging directory...");
                     fileList.add(entry.getPath()); // add to file list for subsequent report
                     client.addFileToStagingDirectory(stageId, entry.getPath(), entryFile);
                 }
@@ -217,31 +217,31 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
                 ClientChangeSet changeSet =
                         ClientChangeSet.newChangeSet(repositoryId, udSite.getUser(), "Uploaded by Jenkins", entries);
     
-                listener.getLogger().println("Committing change set...");
+                listener.getLogger().println("[SDA] Committing change set...");
                 String changeSetId = client.commitStagingDirectory(stageId, changeSet);
-                listener.getLogger().println("Created change set: " + changeSetId);
+                //listener.getLogger().println("[SDA] Created change set: " + changeSetId);
     
-                listener.getLogger().println("Labeling change set with label: " + resolvedVersionName);
+                listener.getLogger().println("[SDA] Labeling change set with label: " + resolvedVersionName);
                 client.labelChangeSet(repositoryId, URLDecoder.decode(changeSetId, "UTF-8"), resolvedVersionName,
                 udSite.getUser(), "Associated with version " + resolvedVersionName);
-                listener.getLogger().println("Done labeling change set!");
+                listener.getLogger().println("[SDA] Done labeling change set.");
             }
             else {
-                listener.getLogger().println("Did not find any files to upload!");
+                listener.getLogger().println("[SDA] Did not find any files to upload!");
             }
         }
         catch (Throwable e) {
-            throw new Exception("Failed to upload files", e);
+            throw new Exception("[SDA] Failed to upload files", e);
         }
         finally {
             if (client != null && stageId != null) {
                 try {
                     client.deleteStagingDirectory(stageId);
-                    listener.getLogger().println("Deleted staging directory: " + stageId);
+                    listener.getLogger().println("[SDA] Deleted staging directory: " + stageId);
                 }
                 catch (Exception e) {
                     listener.getLogger()
-                            .println("Failed to delete staging directory " + stageId + ": " + e.getMessage());
+                            .println("[SDA] Failed to delete staging directory " + stageId + ": " + e.getMessage());
                 }
             }
         }
@@ -283,11 +283,11 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
         uriBuilder.queryParam("name", versionName);
         URI uri = uriBuilder.build();
   
-        listener.getLogger().println("Creating new version \""+versionName+
+        listener.getLogger().println("[SDA] Creating new version \""+versionName+
                 "\" on component "+componentName+"...");
-        listener.getLogger().println("Calling URI \""+uri.toString()+"\"...");
+        //listener.getLogger().println("[SDA] Calling URI \""+uri.toString()+"\"...");
         String jsonOut = site.executeJSONPost(uri, "");
-        listener.getLogger().println("Successfully created new component version.");
+        listener.getLogger().println("[SDA] Successfully created new component version.");
         return jsonOut;
     }
 }

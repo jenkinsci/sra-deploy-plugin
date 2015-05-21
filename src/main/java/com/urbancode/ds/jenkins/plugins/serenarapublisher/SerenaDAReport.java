@@ -1,5 +1,5 @@
 /* ===========================================================================
- *  Copyright (c) 2014 Serena Software. All rights reserved.
+ *  Copyright (c) 2015 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -100,6 +100,7 @@ public class SerenaDAReport {
     private final String versionURI;
     private final String deployName;
     private final String deployURI;
+    private final String deployResult;
     private final String status;
     private final String processName;
     private final String processURI;
@@ -108,13 +109,14 @@ public class SerenaDAReport {
     private SerenaDABuildAction buildAction;
 
     public SerenaDAReport(final String versionName, final String versionURI, final String status,
-                          final String deployName, final String deployURI,
+                          final String deployName, final String deployURI, final String deployResult,
                           final String processName, final String processURI) {
         this.versionName = versionName;
         this.versionURI = versionURI;
         this.status = status;
         this.deployName = deployName;
         this.deployURI = deployURI;
+        this.deployResult = deployResult;
         this.processName = processName;
         this.processURI = processURI;
     }
@@ -137,6 +139,10 @@ public class SerenaDAReport {
 
     public String getDeployURI() {
         return deployURI;
+    }
+
+    public String getDeployResult() {
+        return deployResult;
     }
 
     public String getProcessName() {
@@ -167,8 +173,6 @@ public class SerenaDAReport {
         return buildAction;
     }
 
-    void setBuildAction(SerenaDABuildAction buildAction) {
-        this.buildAction = buildAction;
-    }
+    void setBuildAction(SerenaDABuildAction buildAction) { this.buildAction = buildAction; }
 
 }

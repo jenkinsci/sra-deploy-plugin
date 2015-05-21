@@ -1,5 +1,5 @@
 /* ===========================================================================
- *  Copyright (c) 2014 Serena Software. All rights reserved.
+ *  Copyright (c) 2015 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -353,8 +353,9 @@ public class UrbanDeploySite implements Serializable {
         }
 
         PutMethod method = new PutMethod(uri.toString());
-        setDirectSsoInteractionHeader(method);  
-        method.setRequestBody(putContents);
+        setDirectSsoInteractionHeader(method);
+        if (putContents != null)
+            method.setRequestBody(putContents);
         method.setRequestHeader("Content-Type", "application/json");
         method.setRequestHeader("charset", "utf-8");
         try {
@@ -375,7 +376,7 @@ public class UrbanDeploySite implements Serializable {
             }
         }
         catch (Exception e) {
-            throw new Exception("Error connecting to SerenaRA: " + e.getMessage());
+            throw new Exception("Error connecting to Serena DA: " + e.getMessage());
         }
         finally {
             method.releaseConnection();
@@ -396,7 +397,8 @@ public class UrbanDeploySite implements Serializable {
 
         PostMethod method = new PostMethod(uri.toString());
         setDirectSsoInteractionHeader(method);
-        method.setRequestBody(postContents);
+        if (postContents != null)
+            method.setRequestBody(postContents);
         method.setRequestHeader("Content-Type", "application/json");
         method.setRequestHeader("charset", "utf-8");
         try {
@@ -409,7 +411,7 @@ public class UrbanDeploySite implements Serializable {
             int responseCode = httpClient.executeMethod(method);
 
             if (responseCode != 200 ) {
-                throw new Exception("SerenaRA returned error code: " + responseCode);
+                throw new Exception("Serena DA returned error code: " + responseCode);
             }
             else {
                 result = method.getResponseBodyAsString();
@@ -422,6 +424,19 @@ public class UrbanDeploySite implements Serializable {
             method.releaseConnection();
         }
 
+        return result;
+    }
+
+    public String encodePath(String path) {
+        String result;
+        URI uri;
+        try {
+            uri = new URI(null,null, path, null);
+            result = uri.toASCIIString();
+        }
+        catch (Exception e) {
+            result = path;
+        }
         return result;
     }
     

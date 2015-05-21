@@ -1,5 +1,5 @@
 /* ===========================================================================
- *  Copyright (c) 2014 Serena Software. All rights reserved.
+ *  Copyright (c) 2015 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by

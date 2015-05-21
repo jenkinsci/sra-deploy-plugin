@@ -1,5 +1,5 @@
 /* ===========================================================================
- *  Copyright (c) 2014 Serena Software. All rights reserved.
+ *  Copyright (c) 2015 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -203,6 +203,7 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
     public Notifier newInstance(StaplerRequest req, JSONObject formData)
             throws FormException {
 
+        boolean useAnotherUser = "on".equals(req.getParameter("urbandeploypublisher.useAnotherUser"));
         boolean skip = "on".equals(req.getParameter("urbandeploypublisher.skip"));
         boolean deploy = "on".equals(req.getParameter("urbandeploypublisher.deploy"));
         boolean addStatus = "on".equals(req.getParameter("urbandeploypublisher.addStatus"));
@@ -213,7 +214,19 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
         if (siteName != null) {
             siteName = Util.fixNull(req.getParameter("urbandeploypublisher.siteName").trim());
         }
-  
+
+        String anotherUser = req.getParameter("urbandeploypublisher.anotherUser");
+
+        if (anotherUser != null) {
+            anotherUser = Util.fixNull(req.getParameter("urbandeploypublisher.anotherUser").trim());
+        }
+
+        String anotherPassword = req.getParameter("urbandeploypublisher.anotherPassword");
+
+        if (anotherPassword != null) {
+            anotherPassword = Util.fixNull(req.getParameter("urbandeploypublisher.anotherPassword").trim());
+        }
+
         String component = req.getParameter("urbandeploypublisher.component");
         
         if (component != null) {
@@ -316,7 +329,8 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
             processProps = Util.fixNull(req.getParameter("urbandeploypublisher.processProps").trim());
         }
 
-        UrbanDeployPublisher notif = new UrbanDeployPublisher(siteName, skip, component,
+        UrbanDeployPublisher notif = new UrbanDeployPublisher(siteName, useAnotherUser, anotherUser, anotherPassword,
+                                                              skip, component,
                                                               versionName, directoryOffset,
                                                               baseDir,
                                                               fileIncludePatterns,
@@ -417,6 +431,27 @@ public class UrbanDeployPublisherDescriptor extends BuildStepDescriptor<Publishe
                     throws IOException, ServletException {
                 try {
                     UrbanDeploySite site = new UrbanDeploySite(null, url, user, password);
+                    site.verifyConnection();
+                    ok("Success");
+                }
+                catch (Exception e) {
+                    error(e.getMessage());
+                }
+            }
+        }.process();
+    }
+
+    public void doTestUserConnection(StaplerRequest req, StaplerResponse rsp,
+                                 @QueryParameter("urbandeploypublisher.siteName") final String siteName,
+                                 @QueryParameter("urbandeploypublisher.anotherUser") final String user,
+                                 @QueryParameter("urbandeploypublisher.anotherPassword") final String password)
+            throws IOException, ServletException {
+        new FormFieldValidator(req, rsp, true) {
+            protected void check()
+                    throws IOException, ServletException {
+                try {
+                    UrbanDeploySite site = UrbanDeployPublisherDescriptor.this.getSiteByName(siteName);
+                    site = new UrbanDeploySite(null, site.getUrl(), user, password);
                     site.verifyConnection();
                     ok("Success");
                 }

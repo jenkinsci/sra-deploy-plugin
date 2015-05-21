@@ -37,7 +37,7 @@
       <h2>Deployment</h2>
       <j:if test="${report.getDeployURI() != null}">
         <p>
-            Ran the deployment process <strong>${report.getDeployName()}</strong>.
+            Ran the deployment process <strong>${report.getDeployName()}</strong> with result ${report.getDeployResult()}.
             (<a target="_blank" href="${report.getDeployURI()}">See details</a>)
         </p>
       </j:if>

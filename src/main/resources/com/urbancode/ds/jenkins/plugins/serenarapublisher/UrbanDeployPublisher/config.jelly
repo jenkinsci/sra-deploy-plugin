@@ -13,6 +13,24 @@
                 </select>
             </f:entry>
 
+            <f:entry title="Use Another User" field="useAnotherUser">
+                <f:checkbox name="urbandeploypublisher.useAnotherUser" checked="${instance.useAnotherUser}"/>
+            </f:entry>
+            <f:entry title="User Name" field="anotherUser" help="${helpURL}/help-user.html">
+                <f:textbox name="urbandeploypublisher.anotherUser" value="${instance.anotherUser}"/>
+            </f:entry>
+            <f:entry title="User Password" field="anotherPassword" help="${helpURL}/help-password.html">
+                <f:password name="urbandeploypublisher.anotherPassword" value="${instance.anotherPassword}"/>
+            </f:entry>
+            <f:entry title="">
+                <div style="text-align: right">
+                    <f:validateButton
+                            title="${%Test Connection}" progress="${%Testing...}"
+                            method="testUserConnection"
+                            with="urbandeploypublisher.siteName,urbandeploypublisher.anotherUser,urbandeploypublisher.anotherPassword"/>
+                </div>
+            </f:entry>
+
             <f:entry title="Component" help="${helpURL}/help-component.html" field="componentName" >
                 <f:textbox name="urbandeploypublisher.component" value="${instance.component}" />
             </f:entry>
