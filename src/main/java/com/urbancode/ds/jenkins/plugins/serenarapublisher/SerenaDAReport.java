@@ -104,13 +104,14 @@ public class SerenaDAReport {
     private final String status;
     private final String processName;
     private final String processURI;
+    private final String processResult;
     private List<String> fileList = new ArrayList<String>();
 
     private SerenaDABuildAction buildAction;
 
     public SerenaDAReport(final String versionName, final String versionURI, final String status,
                           final String deployName, final String deployURI, final String deployResult,
-                          final String processName, final String processURI) {
+                          final String processName, final String processURI, final String processResult) {
         this.versionName = versionName;
         this.versionURI = versionURI;
         this.status = status;
@@ -119,6 +120,7 @@ public class SerenaDAReport {
         this.deployResult = deployResult;
         this.processName = processName;
         this.processURI = processURI;
+        this.processResult = processResult;
     }
 
     public String getVersionName() {
@@ -151,6 +153,10 @@ public class SerenaDAReport {
 
     public String getProcessURI() {
         return processURI;
+    }
+
+    public String getProcessResult() {
+        return processResult;
     }
 
     public String getName() {

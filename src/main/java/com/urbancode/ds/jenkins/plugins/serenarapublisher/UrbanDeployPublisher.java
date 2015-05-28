@@ -146,6 +146,7 @@ public class UrbanDeployPublisher extends Notifier {
     private String resourceName;
     private String processProps;
     private String deploymentResult;
+    private String processResult;
     private Map<String, String> envMap = null;
 
     /**
@@ -693,6 +694,22 @@ public class UrbanDeployPublisher extends Notifier {
                     String requestId = processObj.getString("id");
                     processURI = getSite().getUrl() + "/#processRequest/" + requestId;
                     listener.getLogger().println("[SDA] Process request URI is: " + processURI);
+
+                    long startTime = new Date().getTime();
+                    while (!checkGenericProcessStatus(udSite, requestId)) {
+                        Thread.sleep(3000L);
+                    }
+                    if (this.deploymentResult != null)
+                    {
+                        long duration = (new Date().getTime() - startTime) / 1000L;
+                        listener.getLogger().println("[SDA] Finished process " + getProcessName() + " on " + getResourceName() + " in " + duration + " seconds");
+
+                        listener.getLogger().println("[SDA] The process " + this.deploymentResult + ". See the Serena DA logs for more details.");
+                        if (("faulted".equalsIgnoreCase(this.processResult)) || ("failed to start".equalsIgnoreCase(this.processResult))) {
+                            build.setResult(Result.UNSTABLE);
+                        }
+                    }
+
                 }
             } catch (Throwable th) {
                 th.printStackTrace(listener.error("[SDA] Failed to run generic process" + th));
@@ -706,7 +723,7 @@ public class UrbanDeployPublisher extends Notifier {
             vName = resolveVariables(versionName);
         }
         SerenaDAReport report = new SerenaDAReport(vName, versionURI, getStatusName(), getDeployApp(), deployURI,
-                deploymentResult, getProcessName(), processURI);
+                deploymentResult, getProcessName(), processURI, processResult);
         report.setFileList(fileList);
         SerenaDABuildAction buildAction = new SerenaDABuildAction(build, report);
         build.addAction(buildAction);
@@ -813,6 +830,31 @@ public class UrbanDeployPublisher extends Notifier {
                     processFinished = true;
                 } else if (("closed".equalsIgnoreCase(executionStatus)) || ("faulted".equalsIgnoreCase(executionStatus)) || ("faulted".equalsIgnoreCase(executionResult))) {
                     this.deploymentResult = executionResult;
+                    processFinished = true;
+                }
+            }
+        }
+        return processFinished;
+    }
+
+    private boolean checkGenericProcessStatus(UrbanDeploySite site, String requestId)
+            throws Exception
+    {
+        boolean processFinished = false;
+
+        URI uri = UriBuilder.fromPath(site.getUrl()).path("rest").path("process").path("request").path(requestId).build();
+        String requestResult = site.executeJSONGet(uri);
+        if (requestResult != null)
+        {
+            JSONObject trace = new JSONObject(requestResult).optJSONObject("trace");
+            if (trace != null) {
+                String executionStatus = (String) trace.get("state");
+                String executionResult = (String) trace.get("result");
+                if ((executionStatus == null) || ("".equals(executionStatus))) {
+                    this.processResult = "FAULTED";
+                    processFinished = true;
+                } else if (("closed".equalsIgnoreCase(executionStatus)) || ("faulted".equalsIgnoreCase(executionStatus)) || ("faulted".equalsIgnoreCase(executionResult))) {
+                    this.processResult = executionResult;
                     processFinished = true;
                 }
             }

@@ -18,11 +18,11 @@
     <orderEntry type="library" name="Maven: com.sun.jersey:jersey-core:1.17.1" level="project" />
     <orderEntry type="library" name="Maven: com.sun.jersey:jersey-bundle:1.17.1" level="project" />
     <orderEntry type="library" name="Maven: javax.ws.rs:jsr311-api:1.1.1" level="project" />
-    <orderEntry type="library" name="Maven: com.urbancode.vfs:serenara-client:CURRENT" level="project" />
-    <orderEntry type="library" name="Maven: com.urbancode.vfs:serenara-vfs:CURRENT" level="project" />
-    <orderEntry type="library" name="Maven: com.urbancode.vfs:commons-fileutils:CURRENT" level="project" />
-    <orderEntry type="library" name="Maven: com.urbancode.vfs:commons-util:CURRENT" level="project" />
-    <orderEntry type="library" name="Maven: com.serenara.vfs:vfsclient:1.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.urbancode.vfs:serenara-client:CURRENT" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.urbancode.vfs:serenara-vfs:CURRENT" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.urbancode.vfs:commons-fileutils:CURRENT" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.urbancode.vfs:commons-util:CURRENT" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.serenara.vfs:vfsclient:1.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.jenkins-ci.main:jenkins-war:war:1.554.1" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jenkins-ci.main:jenkins-core:1.554.1" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jenkins-ci.main:remoting:2.36" level="project" />

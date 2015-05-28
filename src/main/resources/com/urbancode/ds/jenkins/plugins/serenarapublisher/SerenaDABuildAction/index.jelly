@@ -48,7 +48,7 @@
       <h2>Process Execution</h2>
       <j:if test="${report.getProcessURI() != null}">
         <p>
-            Ran the generic process <strong>${report.getProcessName()}</strong>.
+            Ran the generic process <strong>${report.getProcessName()}</strong> with result ${report.getProcessResult()}.
             (<a target="_blank" href="${report.getProcessURI()}">See details</a>)
         </p>
       </j:if>
