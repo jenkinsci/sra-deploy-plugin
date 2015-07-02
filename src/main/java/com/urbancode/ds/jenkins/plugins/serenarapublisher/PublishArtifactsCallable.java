@@ -122,14 +122,34 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
     final private String resolvedFileExcludePatterns;
     final private String resolvedComponent;
     final private String resolvedVersionName;
+    final private Boolean addPropertiesToVersion;
+    final private String jsonVersionProperties;
+    final private Boolean addStatusToVersion;
+    final private String resolvedStatusName;
     final private BuildListener listener;
 
-    public String versionId; // the unique id for the version that was created
+    public String versionId = null; // the unique id for the version that was created
     public void setVersionId(String verId) {
         this.versionId = verId;
     }
     public String getVersionId() {
-        return versionId;
+        return this.versionId;
+    }
+
+    public String componentId = null; // the unique id for the component that the version was created in
+    public void setComponentId(String componentId) {
+        this.componentId = componentId;
+    }
+    public String getComponentId() {
+        return this.componentId;
+    }
+
+    public String componentRepositoryId = null; // the unique repository id for the component that the version was created in
+    public void setComponentRepositoryId(String componentRepositoryId) {
+        this.componentRepositoryId = componentRepositoryId;
+    }
+    public String getComponentRepositoryId() {
+        return this.componentRepositoryId;
     }
 
     public List<String> fileList = new ArrayList<String>(); // the list of files that we have uploaded
@@ -142,7 +162,8 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
     
     public PublishArtifactsCallable(String resolvedBaseDir, String resolvedDirectoryOffset, UrbanDeploySite udSite,
             String resolvedFileIncludePatterns, String resolvedFileExcludePatterns, String resolvedComponent,
-            String resolvedVersionName, BuildListener listener) {
+            String resolvedVersionName, Boolean addPropertiesToVersion, String jsonVersionProperties,
+            Boolean addStatusToVersion, String resolvedStatusName, BuildListener listener) {
         this.resolvedBaseDir = resolvedBaseDir;
         this.resolvedDirectoryOffset = resolvedDirectoryOffset;
         this.udSite = udSite;
@@ -150,6 +171,10 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
         this.resolvedFileExcludePatterns = resolvedFileExcludePatterns;
         this.resolvedComponent = resolvedComponent;
         this.resolvedVersionName = resolvedVersionName;
+        this.addPropertiesToVersion = addPropertiesToVersion;
+        this.jsonVersionProperties = jsonVersionProperties;
+        this.addStatusToVersion = addStatusToVersion;
+        this.resolvedStatusName = resolvedStatusName;
         this.listener = listener;
     }
 
@@ -186,6 +211,7 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
         String verJson = createComponentVersion(udSite, resolvedComponent, resolvedVersionName, listener);
         JSONObject verObj = new JSONObject(verJson);
         setVersionId(verObj.getString("id"));
+        listener.getLogger().println("[SDA] Created new version with id " + getVersionId());
 
         listener.getLogger().println("[SDA] Working Directory: " + workDir.getPath());
         listener.getLogger().println("[SDA] Includes: " + resolvedFileIncludePatterns);
@@ -208,21 +234,22 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
     
                 for (ClientPathEntry entry : entries) {
                     File entryFile = new File(workDir, entry.getPath());
-                    listener.getLogger().println("[SDA] Adding " + entry.getPath() + " to staging directory...");
                     fileList.add(entry.getPath()); // add to file list for subsequent report
                     client.addFileToStagingDirectory(stageId, entry.getPath(), entryFile);
                 }
-    
-                String repositoryId = getComponentRepositoryId(udSite, resolvedComponent);
+                listener.getLogger().println("[SDA] Added " + entries.length + " files to staging directory...");
+
+                String compId[] = getComponentIdAndRepositoryId(udSite, resolvedComponent);
+                setComponentId(compId[0]);
+                setComponentRepositoryId(compId[1]);
                 ClientChangeSet changeSet =
-                        ClientChangeSet.newChangeSet(repositoryId, udSite.getUser(), "Uploaded by Jenkins", entries);
+                        ClientChangeSet.newChangeSet(componentRepositoryId, udSite.getUser(), "Uploaded by Jenkins", entries);
     
                 listener.getLogger().println("[SDA] Committing change set...");
                 String changeSetId = client.commitStagingDirectory(stageId, changeSet);
-                //listener.getLogger().println("[SDA] Created change set: " + changeSetId);
-    
+
                 listener.getLogger().println("[SDA] Labeling change set with label: " + resolvedVersionName);
-                client.labelChangeSet(repositoryId, URLDecoder.decode(changeSetId, "UTF-8"), resolvedVersionName,
+                client.labelChangeSet(componentRepositoryId, URLDecoder.decode(changeSetId, "UTF-8"), resolvedVersionName,
                 udSite.getUser(), "Associated with version " + resolvedVersionName);
                 listener.getLogger().println("[SDA] Done labeling change set.");
             }
@@ -245,17 +272,45 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
                 }
             }
         }
-        
+
+        if (addPropertiesToVersion) {
+            listener.getLogger().println("[SDA] Creating version properties on uploaded version...");
+            // get property sheet id
+            String propSheetId = getComponentVersionPropsheetId(udSite, getVersionId());
+            //listener.getLogger().println("[SDA] Found component version property sheet id: " + propSheetId);
+            // get component id
+            //listener.getLogger().println("[SDA] Found component id: " + getComponentId());
+
+            // put properties
+            String encodedPropSheetId = "components%26" + getComponentId() + "%26versions%26" + getVersionId() + "%26propSheetGroup%26propSheets%26"
+                    + propSheetId + ".-1/allPropValues";
+            URI uri = UriBuilder.fromPath(udSite.getUrl()).path("property").path("propSheet").path(encodedPropSheetId).build();
+            //listener.getLogger().println("Calling URI \"" + uri.toString() + "\" with body " + jsonVersionProperties);
+            udSite.executeJSONPut(uri,jsonVersionProperties);
+        }
+
+        if (addStatusToVersion) {
+            if (resolvedStatusName == null || resolvedStatusName.trim().length() == 0) {
+                throw new Exception("[SDA] Status Name is a required field if Add Status is selected!");
+            }
+
+            listener.getLogger().println("[SDA] Applying status " + resolvedStatusName + " to version " + resolvedVersionName);
+            createAddStatusRequest(udSite, this.versionId, resolvedStatusName);
+        }
+
         return true;
     }
 
-    private String getComponentRepositoryId(UrbanDeploySite site, String componentName)
+    public String[] getComponentIdAndRepositoryId(UrbanDeploySite site, String componentName)
             throws Exception {
-        String result = null;
+        String[] results = new String[2];
         URI uri = UriBuilder.fromPath(site.getUrl()).path("rest").path("deploy").path("component").path(componentName)
                 .build();
 
         String componentContent = site.executeJSONGet(uri);
+
+        String componentId = new JSONObject(componentContent).getString("id");
+        results[0] = componentId;
 
         JSONArray properties = new JSONObject(componentContent).getJSONArray("properties");
         if (properties != null) {
@@ -265,12 +320,12 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
                 String propValue = propertyJson.getString("value");
 
                 if ("code_station/repository".equalsIgnoreCase(propName)) {
-                    result = propValue.trim();
+                    results[1] = propValue.trim();
                     break;
                 }
             }
         }
-        return result;
+        return results;
     }
 
     private String createComponentVersion(UrbanDeploySite site, String componentName,
@@ -285,9 +340,33 @@ public class PublishArtifactsCallable implements Callable<Boolean, Exception> {
   
         listener.getLogger().println("[SDA] Creating new version \""+versionName+
                 "\" on component "+componentName+"...");
-        //listener.getLogger().println("[SDA] Calling URI \""+uri.toString()+"\"...");
         String jsonOut = site.executeJSONPost(uri, "");
         listener.getLogger().println("[SDA] Successfully created new component version.");
         return jsonOut;
+    }
+
+    public String getComponentVersionPropsheetId(UrbanDeploySite site, String verId)
+            throws Exception {
+        URI uri = UriBuilder.fromPath(site.getUrl()).path("rest").path("deploy").path("version")
+                .path(verId).build();
+        String result = null;
+
+        String versionContent = site.executeJSONGet(uri);
+
+        JSONArray propSheets = new JSONObject(versionContent).getJSONArray("propSheets");
+        if (propSheets != null) {
+            JSONObject propertyJson = propSheets.getJSONObject(0);
+            result = propertyJson.getString("id").trim();
+        }
+        return result;
+    }
+
+    private void createAddStatusRequest(UrbanDeploySite site, String versionName, String statusName)
+            throws Exception {
+        UriBuilder uriBuilder = UriBuilder.fromPath(site.getUrl()).path("rest").path("deploy").path("version")
+                .path(versionName).path("status").path(statusName);
+        URI uri = uriBuilder.build();
+        String json = "{\"status\":\"" + statusName + "\"}";
+        site.executeJSONPut(uri,json);
     }
 }

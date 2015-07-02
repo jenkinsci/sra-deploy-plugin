@@ -104,7 +104,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.ws.rs.core.UriBuilder;
 
-import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
 
 /**
@@ -281,7 +280,7 @@ public class UrbanDeployPublisher extends Notifier {
         this.fileExcludePatterns = fileExcludePatterns;
     }
 
-    public void setAddPropertiesToVersion(boolean addStatus) {
+    public void setAddPropertiesToVersion(boolean addPropertiesToVersion) {
         this.addPropertiesToVersion = addPropertiesToVersion;
     }
 
@@ -456,11 +455,10 @@ public class UrbanDeployPublisher extends Notifier {
         UrbanDeploySite udSite = getSite();
         String resolvedAnotherUser = null;
         String resolvedAnotherPassword = null;
-        String versionURI = null;
-        String status = null;
         String deployURI = null;
         String processURI = null;
-        List<String> fileList = new ArrayList<String>();
+
+        PublishArtifactsCallable task = null;
 
         if (isUseAnotherUser())
         {
@@ -493,11 +491,11 @@ public class UrbanDeployPublisher extends Notifier {
 
             // iterate over version properties to construct JSON string
             String jsonVersionProperties = "{";
-            if (resolvedVersionProperties == null) {
-                addPropertiesToVersion = false;
+            if (resolvedVersionProperties == null || resolvedVersionProperties.trim().length() == 0) {
+                setAddPropertiesToVersion(false);
                 listener.getLogger().println("[SDA] Version Properties: none defined");
             } else {
-                addPropertiesToVersion = true;
+                setAddPropertiesToVersion(true);
                 // iterate over properties
                 BufferedReader bufReader = new BufferedReader(new StringReader(resolvedVersionProperties));
                 String line = null, propName = null, propVal = null;
@@ -513,7 +511,7 @@ public class UrbanDeployPublisher extends Notifier {
 
             // iterate over deployment properties to construct JSON string
             String jsonDeployProperties = "{";
-            if (resolvedDeployProperties == null) {
+            if (resolvedDeployProperties == null || resolvedDeployProperties.trim().length() == 0) {
                 listener.getLogger().println("[SDA] Deployment properties: none defined");
             } else {
                 BufferedReader bufReader = new BufferedReader(new StringReader(resolvedDeployProperties));
@@ -531,43 +529,14 @@ public class UrbanDeployPublisher extends Notifier {
             jsonDeployProperties += "}";
 
             try {
-                PublishArtifactsCallable task = new PublishArtifactsCallable(resolvedBaseDir, resolvedDirectoryOffset,
+                task = new PublishArtifactsCallable(resolvedBaseDir, resolvedDirectoryOffset,
                         udSite, resolvedFileIncludePatterns, resolvedFileExcludePatterns, resolvedComponent,
-                        resolvedVersionName, listener);
-                launcher.getChannel().call(task);
-                String verId = task.getVersionId();
-                fileList = task.getFileList();
-
-                versionURI = getSite().getUrl() + "/#version/" + verId;
-                listener.getLogger().println("[SDA] Component version URI is: " + versionURI);
-
-                // TODO: refactor deployment to separate class as per PublishArtifactsCallable
-
-                if (isAddPropertiesToVersion()) {
-                    listener.getLogger().println("[SDA] Creating version properties on uploaded version...");
-                    // get property sheet id
-                    String propSheetId = getComponentVersionPropsheetId(udSite, verId);
-                    listener.getLogger().println("[SDA] Found component version property sheet id: " + propSheetId);
-                    // get component id
-                    String componentDetails[] = getComponentRepositoryId(udSite, resolvedComponent);
-                    String componentId = componentDetails[0];
-                    listener.getLogger().println("[SDA] Found component id: " + componentId);
-
-                    // put properties
-                    String encodedPropSheetId = "components%26" + componentId + "%26versions%26" + verId + "%26propSheetGroup%26propSheets%26"
-                            + propSheetId + ".-1/allPropValues";
-                    URI uri = UriBuilder.fromPath(udSite.getUrl()).path("property").path("propSheet").path(encodedPropSheetId).build();
-                    /*listener.getLogger().println("Calling URI \"" + uri.toString() + "\" with body " + jsonVersionProperties);*/
-                    udSite.executeJSONPut(uri,jsonVersionProperties);
-                }
-
-                if (isAddStatus()) {
-                    if (getStatusName() == null || getStatusName().trim().length() == 0) {
-                        throw new Exception("[SDA] Status Name is a required field if Add Status is selected!");
-                    }
-
-                    listener.getLogger().println("[SDA] Applying status " + getStatusName() + " to version " + resolvedVersionName);
-                    createAddStatusRequest(udSite, verId, getStatusName());
+                        resolvedVersionName, isAddPropertiesToVersion(), jsonVersionProperties,
+                        isAddStatus(), resolvedStatusName, listener);
+                try {
+                    launcher.getChannel().call(task);
+                } catch (InterruptedException e) {
+                    throw new Exception("[SDA] Error calling PublishArtifactsCallable!");
                 }
 
                 // work out if we should initiate deployment of version
@@ -606,7 +575,7 @@ public class UrbanDeployPublisher extends Notifier {
                     String deployJson = createApplicationProcessRequest(udSite, resolvedComponent, resolvedVersionName, jsonDeployProperties);
                     JSONObject deployObj = new JSONObject(deployJson);
                     String requestId = deployObj.getString("requestId");
-                    deployURI = getSite().getUrl() + "/#applicationProcessRequest/" + requestId;
+                    deployURI = getSite().getUrl() + "/app#/application-process-request/" + requestId + "/log";
                     listener.getLogger().println("[SDA] Deployment request URI is: " + deployURI);
 
                     long startTime = new Date().getTime();
@@ -692,7 +661,7 @@ public class UrbanDeployPublisher extends Notifier {
                     String processJson = createGenericProcessRequest(udSite, processName, resourceName, jsonProcessProperties);
                     JSONObject processObj = new JSONObject(processJson);
                     String requestId = processObj.getString("id");
-                    processURI = getSite().getUrl() + "/#processRequest/" + requestId;
+                    processURI = getSite().getUrl() + "/app#/process-request/" + requestId + "/log";
                     listener.getLogger().println("[SDA] Process request URI is: " + processURI);
 
                     long startTime = new Date().getTime();
@@ -719,68 +688,18 @@ public class UrbanDeployPublisher extends Notifier {
 
         listener.getLogger().println("[SDA] Generating Deployment report...");
         String vName = null;
+        String vURI = null;
         if (!isSkip()) {
             vName = resolveVariables(versionName);
+            vURI = getSite().getUrl() + "/app#/version/" + task.getVersionId() + "/artifacts";
         }
-        SerenaDAReport report = new SerenaDAReport(vName, versionURI, getStatusName(), getDeployApp(), deployURI,
+        SerenaDAReport report = new SerenaDAReport(vName, vURI, getStatusName(), getDeployApp(), deployURI,
                 deploymentResult, getProcessName(), processURI, processResult);
-        report.setFileList(fileList);
+        report.setFileList(task.getFileList());
         SerenaDABuildAction buildAction = new SerenaDABuildAction(build, report);
         build.addAction(buildAction);
 
         return true;
-    }
-
-    public String[] getComponentRepositoryId(UrbanDeploySite site, String componentName)
-            throws Exception {
-        String[] results = new String[2];
-        URI uri = UriBuilder.fromPath(site.getUrl()).path("rest").path("deploy").path("component").path(componentName)
-                .build();
-
-        String componentContent = site.executeJSONGet(uri);
-
-        String componentId = new JSONObject(componentContent).getString("id");
-        results[0] = componentId;
-
-        JSONArray properties = new JSONObject(componentContent).getJSONArray("properties");
-        if (properties != null) {
-            for (int i = 0; i < properties.length(); i++) {
-                JSONObject propertyJson = properties.getJSONObject(i);
-                String propName = propertyJson.getString("name");
-                String propValue = propertyJson.getString("value");
-
-                if ("code_station/repository".equalsIgnoreCase(propName)) {
-                    results[1] = propValue.trim();
-                    break;
-                }
-            }
-        }
-        return results;
-    }
-
-    public String getComponentVersionPropsheetId(UrbanDeploySite site, String verId)
-            throws Exception {
-        URI uri = UriBuilder.fromPath(site.getUrl()).path("rest").path("deploy").path("version")
-                .path(verId).build();
-        String result = null;
-
-        String versionContent = site.executeJSONGet(uri);
-
-        JSONArray propSheets = new JSONObject(versionContent).getJSONArray("propSheets");
-        if (propSheets != null) {
-            JSONObject propertyJson = propSheets.getJSONObject(0);
-            result = propertyJson.getString("id").trim();
-        }
-        return result;
-    }
-
-    private void createAddStatusRequest(UrbanDeploySite site, String versionName, String statusName)
-            throws Exception {
-        UriBuilder uriBuilder = UriBuilder.fromPath(site.getUrl()).path("rest").path("deploy").path("version")
-                .path(versionName).path("status").path(statusName);
-        URI uri = uriBuilder.build();
-        String json = "{\"status\":\"" + statusName + "\"}";
-        site.executeJSONPut(uri,json);
     }
 
     private String createApplicationProcessRequest(UrbanDeploySite site, String componentName, String versionName,
