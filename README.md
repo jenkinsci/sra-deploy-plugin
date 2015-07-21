@@ -11,14 +11,27 @@ Build Instructions
 
 You will need Apache Maven and a Java JDK 1.6 or later to build the plugin.
 
-To successfully build the plugin using maven you will need to install a number of Serena DA libraries into your local maven (.m2) cache.
+To successfully build the plugin using maven you will need to install the Serena VFS libraries into your local maven (.m2) cache.
 To do this navigate to the WEB-INF\lib directory of a Serena Deployment Automation installation and execute the following commands:
 
 ```
->mvn install:install-file -Dfile=.\serenara-client-CURRENT.jar -DgroupId=com.urbancode.vfs -DartifactId=serenara-client -Dversion=CURRENT -Dpackaging=jar
->mvn install:install-file -Dfile=.\serenara-vfs-CURRENT.jar -DgroupId=com.urbancode.vfs -DartifactId=serenara-vfs -Dversion=CURRENT -Dpackaging=jar
->mvn install:install-file -Dfile=.\commons-fileutils-CURRENT.jar  -DgroupId=com.urbancode.vfs  -DartifactId=commons-fileutils -Dversion=CURRENT -Dpackaging=jar
->mvn install:install-file -Dfile=.\commons-util-CURRENT.jar -DgroupId=com.urbancode.vfs -DartifactId=commons-util -Dversion=CURRENT -Dpackaging=jar
+>mvn install:install-file -Dfile=.\serenara-client-CURRENT.jar -DgroupId=com.urbancode.vfs -DartifactId=serenara-client -Dversion=6.0 -Dpackaging=jar
+>mvn install:install-file -Dfile=.\vfs-CURRENT.jar -DgroupId=com.urbancode.vfs -DartifactId=serenara-vfs -Dversion=6.0 -Dpackaging=jar
+>mvn install:install-file -Dfile=.\commons-fileutils-CURRENT.jar  -DgroupId=com.urbancode.vfs  -DartifactId=commons-fileutils -Dversion=6.0 -Dpackaging=jar
+>mvn install:install-file -Dfile=.\commons-util-CURRENT.jar -DgroupId=com.urbancode.vfs -DartifactId=commons-util -Dversion=6.0 -Dpackaging=jar
 ```
 
+Then edit the pom.xml file in the root directory of the plugin and change the line:
+
+```
+<sda-version>6.0</sda-version>
+```
+
+to reflect the version of SDA you are using.
+
+Installable files are in the the directory: https://github.com/jenkinsci/sra-deploy-plugin/tree/master/releases
+
 Thank you!
+
+klee@serena.com
+

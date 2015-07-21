@@ -9,11 +9,15 @@
     
   <groupId>com.urbancode.ds.jenkins.plugins</groupId>
   <artifactId>sra-deploy</artifactId>
-  <version>1.5.1.0-SNAPSHOT</version>
+  <version>1.5.2.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <name>Serena SDA Deploy</name>
   <description>Serena SDA Deploy for Jenkins</description>
   <url>http://wiki.jenkins-ci.org/display/JENKINS/Serena+Deploy+Plugin</url>
+  <properties>
+    <jenkins-version>1.609.1</jenkins-version>
+    <sda-version>6.0</sda-version>
+  </properties>
 
     <developers>
         <developer>
@@ -56,31 +60,29 @@
         <dependency>
             <groupId>com.urbancode.vfs</groupId>
             <artifactId>serenara-client</artifactId>
-            <version>CURRENT</version>
+            <version>${sda-version}</version>
+            <!-- comment out to build hpi with jar included -->
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.urbancode.vfs</groupId>
             <artifactId>serenara-vfs</artifactId>
-            <version>CURRENT</version>
+            <version>${sda-version}</version>
+            <!-- comment out to build hpi with jar included -->
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.urbancode.vfs</groupId>
             <artifactId>commons-fileutils</artifactId>
-            <version>CURRENT</version>
+            <version>${sda-version}</version>
+            <!-- comment out to build hpi with jar included -->
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.urbancode.vfs</groupId>
             <artifactId>commons-util</artifactId>
-            <version>CURRENT</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.serenara.vfs</groupId>
-            <artifactId>vfsclient</artifactId>
-            <version>1.0</version>
+            <version>${sda-version}</version>
+            <!-- comment out to build hpi with jar included -->
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -128,11 +130,6 @@
         <repository>
             <id>repo.jenkins-ci.org</id>
             <url>http://repo.jenkins-ci.org/public/</url>
-        </repository>
-        <!-- custom internet repository for SDA jars -->
-        <repository>
-            <id>repo.srnademo.com</id>
-            <url>http://repo.srnademo.com/</url>
         </repository>
         <repository>
             <id>serena-lib</id>
