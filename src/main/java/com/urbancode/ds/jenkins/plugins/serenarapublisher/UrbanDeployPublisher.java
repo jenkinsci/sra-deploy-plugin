@@ -107,6 +107,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * com.urbancode.ds.jenkins.plugins.serenarapublisher.UrbanDeploySite}. </p>
  */
 public class UrbanDeployPublisher extends Notifier {
+    private final Pattern pattern = Pattern.compile("\\$\\{[^}]*}");
 
     /**
      * Hold an instance of the Descriptor implementation for the UrbanDeploy Publisher.
@@ -364,7 +365,6 @@ public class UrbanDeployPublisher extends Notifier {
     private String resolveVariables(String input) {
         String result = input;
         if (input != null && input.trim().length() > 0) {
-            Pattern pattern = Pattern.compile("\\$\\{[^}]*}");
             Matcher matcher = pattern.matcher(result);
             while (matcher.find()) {
                 String key = result.substring(matcher.start() + 2, matcher.end() - 1);
