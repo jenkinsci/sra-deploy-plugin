@@ -107,7 +107,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * com.urbancode.ds.jenkins.plugins.serenarapublisher.UrbanDeploySite}. </p>
  */
 public class UrbanDeployPublisher extends Notifier {
-    private final Pattern pattern = Pattern.compile("\\$\\{[^}]*}");
+    private static final Pattern pattern = Pattern.compile("\\$\\{[^}]*}");
 
     /**
      * Hold an instance of the Descriptor implementation for the UrbanDeploy Publisher.
